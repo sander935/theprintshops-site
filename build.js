@@ -1,0 +1,748 @@
+#!/usr/bin/env node
+/* The Print Shop (Collingwood) — static site generator.
+   Run: node build.js  →  writes the full site to ./dist
+   Edit the DATA section below to change products, services, copy, FAQs. */
+const fs = require("fs");
+const path = require("path");
+
+const OUT = path.join(__dirname, "dist");
+const LIVE = "https://www.theprintshops.ca";
+const BASE = process.env.SITE_BASE || LIVE; // canonical/sitemap host
+const PHONE = "705 445 2880", TEL = "+17054452880", EMAIL = "info@theprintshops.ca";
+const AREAS = ["Collingwood", "The Blue Mountains", "Wasaga Beach", "Thornbury", "Stayner", "Meaford", "Creemore"];
+const GEO = { lat: "44.5009", lng: "-80.2169" };
+
+// ---------------------------------------------------------------- DATA
+const PRODUCTS = [
+  ["business-cards","Business Cards","The first thing you hand over. Make it worth keeping.",
+    [["A small card that does real work","Your business card is often the first physical thing a customer keeps from you. We print on heavier stocks that feel substantial in hand, with clean edges and accurate colour so your brand looks the way you intended."],
+     ["Finishes that set you apart","Choose a matte or gloss coat for everyday durability, or add a specialty finish when you want the card to make an impression. Double-sided printing gives you room for a logo on one side and the details on the other."]],
+    ["Sales and networking","Trades and services","Retail and hospitality","Realtors and agents"],
+    [["Stocks","14pt / 16pt / premium"],["Sides","Single or double-sided"],["Coating","Matte, gloss or uncoated"],["Corners","Square or rounded"]]],
+  ["brochures","Brochures","Get your message across in a single, well-folded piece.",
+    [["Say more without losing them","A brochure gives you space to explain a product, a service or an event without overwhelming the reader. A considered fold guides the eye from the cover through to your call to action."],
+     ["Folds for every job","Tri-fold and bi-fold are the workhorses for mailers and handouts. For a heftier piece, gate and Z-folds give you extra panels and a more premium feel. We'll help you pick the fold that fits your content."]],
+    ["Product and service overviews","Event and program guides","Menus and price lists","Direct mail"],
+    [["Folds","Tri-fold, bi-fold, gate, Z-fold"],["Sizes","Letter, legal, custom"],["Stocks","Text or cover weight"],["Coating","Gloss aqueous available"]]],
+  ["flyers","Flyers","Fast, affordable and hard to ignore.",
+    [["Reach for reach","Flyers are the quickest way to get a promotion, event or announcement in front of a lot of people for a little money. Bold four-colour printing makes your message pop on the page."],
+     ["Go bigger when it counts","Need more room? Print larger and fold to get twice the impact for your budget. Glossy aqueous coating adds shine and a little extra durability for pieces that get handled."]],
+    ["Sales and promotions","Grand openings","Community events","Handbills and inserts"],
+    [["Sizes","Half-page to 11×17"],["Sides","Single or double-sided"],["Coating","Matte or gloss aqueous"],["Stocks","Text or light cover"]]],
+  ["postcards","Postcards","Compact, direct, and built for the mailbox.",
+    [["A marketer's favourite","Postcards are small, inexpensive and impossible to leave unopened — there's no envelope in the way. That makes them ideal for targeted mailings, reminders and simple, repeatable campaigns."],
+     ["Print heavy, mail smart","We print on sturdy card stock that survives the mail stream and still looks sharp on arrival. Ask us about sizes that qualify for better postage rates."]],
+    ["Direct mail campaigns","Appointment reminders","Save-the-dates","Loyalty and offers"],
+    [["Sizes","4×6, 5×7, 6×9, custom"],["Stocks","Card weight"],["Sides","Single or double-sided"],["Coating","Matte, gloss or UV"]]],
+  ["booklets","Booklets","Programs, catalogues and reports, bound to look the part.",
+    [["More pages, more to say","When a single sheet isn't enough, a booklet gives your content room to breathe. Programs, catalogues, reports and manuals all read better bound into a proper piece."],
+     ["Printed and bound in-house","We handle printing and binding under one roof, so your booklet comes together faster and stays consistent from cover to last page. Full-colour interiors on a heavier gloss stock keep graphics crisp."]],
+    ["Event programs","Product catalogues","Annual reports","Manuals and guides"],
+    [["Binding","Saddle-stitch or bound"],["Pages","In multiples of four"],["Covers","Self or heavier cover stock"],["Interior","B&W or full colour"]]],
+  ["sell-sheets","Sell Sheets","One page that answers the question and closes the gap.",
+    [["The one-pager that sells","Most customers don't buy on the spot — decisions get made in the days and weeks after. A sell sheet is the leave-behind that keeps working once you've left the room."],
+     ["Clear, credible, memorable","A tight layout with the right features, benefits and proof points gives buyers what they need to say yes. Print on a quality stock so it feels as serious as your offer."]],
+    ["Sales leave-behinds","Product one-pagers","Line cards","Real estate features"],
+    [["Sizes","Letter standard, custom"],["Sides","Single or double-sided"],["Stocks","Text or cover weight"],["Coating","Matte or gloss"]]],
+  ["rack-cards","Rack Cards","Slim, standable and built for the display rack.",
+    [["Made for the rack","Rack cards fit the standard display racks you find in hotels, visitor centres and lobbies. Their slim shape stands out in a row and travels easily in a pocket or bag."],
+     ["A natural fit for the region","For tourism, attractions and local retail around Collingwood and Georgian Bay, rack cards put your offer where visitors are already looking."]],
+    ["Tourism and attractions","Hotels and rentals","Restaurants and cafés","Services and clinics"],
+    [["Sizes","4×9 standard, custom"],["Sides","Single or double-sided"],["Stocks","Card weight"],["Coating","Matte or gloss"]]],
+  ["door-hangers","Door Hangers","Land your offer right on the doorstep.",
+    [["No mailbox to compete with","A door hanger goes straight onto the handle, so it's the only message a household sees at that moment. That makes it a strong choice for local, neighbourhood-level marketing."],
+     ["Built to be noticed","Print bold on a sturdy stock with a clean die-cut hole so hangers stay put and stay readable. Add a tear-off coupon to give people a reason to keep it."]],
+    ["Home services","Restaurants and delivery","Real estate farming","Neighbourhood offers"],
+    [["Sizes","Standard hanger, custom"],["Sides","Single or double-sided"],["Stocks","Cover weight"],["Add-ons","Tear-off perforation"]]],
+  ["newsletters","Newsletters","Keep members and customers in the loop with something they'll keep.",
+    [["A printed piece gets read","Email is easy to ignore. A printed newsletter that lands on a desk or in a mailbox gets picked up, read and often kept — which is exactly what you want for members, clients and community groups."],
+     ["Consistent issue after issue","We keep your format, colours and paper consistent from one issue to the next, so your newsletter builds recognition over time. Reorders are quick once the template is set."]],
+    ["Associations and clubs","Churches and schools","Client updates","Community groups"],
+    [["Sizes","Letter, legal, tabloid"],["Pages","Single sheet to booklet"],["Colour","B&W or full colour"],["Stocks","Text weight"]]],
+  ["envelopes","Envelopes","Mail that arrives looking like it means business.",
+    [["Match your letterhead","A printed envelope that matches your letterhead signals a professional, put-together business before the recipient has even opened it. We print your logo and return address cleanly and consistently."],
+     ["Sizes for every mailing","From standard #10 business envelopes to larger booklet and catalogue sizes, we print the format your mailing calls for, with or without a window."]],
+    ["Business correspondence","Invoices and statements","Direct mail","Announcements"],
+    [["Sizes","#10, #9, booklet, catalogue"],["Window","With or without"],["Colour","One-colour to full colour"],["Stocks","Standard or premium"]]],
+  ["labels","Labels","Not just for products — for anything worth marking.",
+    [["One label, many jobs","Labels do more than name a product. Use them for return addresses, warnings, or a quick way to tag specials and sales. Choose a removable static cling when you need to move or peel it clean."],
+     ["Durable when you need it","Need extra life out of a label? Glossy paper or vinyl stands up to handling and moisture without stretching the budget. We'll match the stock to where the label ends up."]],
+    ["Product and packaging","Shipping and address","Promotions and sales","Warnings and instructions"],
+    [["Shapes","Rectangle, round, custom die"],["Stocks","Paper, gloss, vinyl, cling"],["Adhesive","Permanent or removable"],["Format","Sheets or rolls"]]],
+  ["carbonless-forms","Carbonless Forms","Keep your paperwork tidy, in duplicate or triplicate.",
+    [["Tame the paperwork","Carbonless forms streamline your workflow and cut down on disorder. Invoices, work orders and receipts print in duplicate or triplicate so everyone keeps a copy without a photocopier."],
+     ["Numbered and padded to suit","We can sequentially number your forms and pad or book them so they're easy to use in the field or at the counter. Consistent layouts make them quick to fill in."]],
+    ["Invoices and receipts","Work and service orders","Estimates and quotes","Delivery slips"],
+    [["Parts","2-part or 3-part"],["Binding","Padded, booked or loose"],["Numbering","Sequential available"],["Sizes","Half-page, letter, custom"]]],
+];
+
+const SERVICES = [
+  ["bindery-finishing","Bindery & Finishing","The steps that turn a stack of sheets into a proper piece.",
+    [["Finishing, in-house","Printing is only half the job. Cutting, folding, scoring, perforating, drilling, numbering and shrink-wrapping are the details that separate tidy work from rough work — and we do them all under one roof."],
+     ["Right the first time","Keeping finishing in-house means fewer hand-offs, tighter quality control and faster turnaround. Your job is checked at every stage before it goes out the door."]],
+    ["Cutting & trimming","Folding & scoring","Perforating & drilling","Numbering","Shrink-wrapping","Padding"]],
+  ["graphic-design-services","Graphic Design","From concept to design to print — creative and effective.",
+    [["No print-ready file? No problem.","Not everyone arrives with finished artwork. Our designers can build a piece from scratch or clean up what you have so it prints exactly as intended — the right size, the right colours, the right resolution."],
+     ["Design that's made to print","There's a difference between art that looks good on screen and art that prints well. We design with bleeds, trim and stock in mind from the start, so there are no surprises on press."]],
+    ["Logos & branding","Brochure & flyer layout","Business card design","File clean-up & prepress"]],
+  ["booklet-binding","Booklet Binding","Saddle-stitch and bound booklets, assembled in-house.",
+    [["Bound to last","From thin programs to thick catalogues, we assemble and bind booklets in-house. That keeps the whole job consistent — printing and binding matched to the same standard."],
+     ["The right binding for the page count","Saddle-stitch suits lighter booklets, while heavier pieces call for a sturdier bound edge. We'll recommend the binding that matches your page count and how the booklet will be used."]],
+    ["Saddle-stitch","Bound booklets","Programs & catalogues","Manuals & reports"]],
+  ["printing-copying-services","Printing & Copying","Short runs, long runs, colour and black-and-white.",
+    [["Everyday printing on a deadline","Sometimes you just need clean copies, fast. We handle everyday printing and copying in colour and black-and-white, from a handful of pages to long production runs."],
+     ["A full-service printer","The Print Shop is a full-service printer, which means we can do just about anything — and if a job needs finishing or binding, it's already here."]],
+    ["Colour copies","Black & white copies","Short-run digital","Long-run production"]],
+];
+
+const FAQ = {
+  "business-cards":[["How much do business cards cost in Collingwood?","Pricing depends on quantity, stock and finish. Most orders start with a box of 100 to 250 cards. Request a free estimate and we'll give you a firm price, usually the same day."],["How fast can I get business cards printed?","For print-ready files, standard turnaround is a few business days. Ask about a rush if you need them sooner — because we print locally in Collingwood, there's no shipping wait."],["Can you design my business card, or do I need a finished file?","Both work. Send a print-ready file, or have our in-house designers build the card for you."]],
+  "brochures":[["What brochure folds do you offer?","Tri-fold and bi-fold are the most common, with gate and Z-folds for a more premium piece. We'll recommend the fold that fits your content and budget."],["What's the minimum order for brochures?","We print short and long runs. Tell us your quantity and we'll quote it — small runs are no problem for a local shop."]],
+  "flyers":[["How quickly can flyers be printed?","Flyers are one of our fastest products. With a print-ready file, most runs are ready in a few business days, with rush options available."],["Can I print double-sided flyers with a gloss coat?","Yes. Single or double-sided, with matte or gloss aqueous coating to make the colour pop."]],
+  "postcards":[["Do you handle postcard mailings?","We print postcards on sturdy, mail-ready card stock. Ask us about sizes that qualify for better postage rates for your campaign."],["What's the best postcard size for direct mail?","4×6 and 5×7 are popular and cost-effective. We'll help you pick a size that balances impact and postage."]],
+  "booklets":[["What binding do you use for booklets?","Saddle-stitch for lighter booklets and bound edges for thicker pieces. Page count must be in multiples of four. We print and bind in-house."],["Can you print full-colour booklet interiors?","Yes — black-and-white or full colour, on text or heavier gloss stock for sharp graphics."]],
+  "sell-sheets":[["What is a sell sheet used for?","A sell sheet is a single-page leave-behind that keeps selling after the conversation — features, benefits and proof on one page."],["Can you print sell sheets double-sided?","Yes, single or double-sided on text or cover weight, with a matte or gloss finish."]],
+  "rack-cards":[["What size are rack cards?","The standard is 4×9, which fits display racks in hotels, visitor centres and lobbies. Custom sizes are available."],["Are rack cards good for Collingwood tourism businesses?","Very. For attractions, hotels and restaurants around Collingwood and Georgian Bay, rack cards put your offer where visitors already look."]],
+  "door-hangers":[["Are door hangers effective for local marketing?","Yes — a door hanger is the only message on the handle, with no mailbox to compete with. Add a tear-off coupon to give people a reason to keep it."]],
+  "newsletters":[["Can you print and mail a recurring newsletter?","We print newsletters in formats from a single sheet to a bound booklet, and keep your layout consistent issue to issue so reorders are quick."]],
+  "envelopes":[["Can you print envelopes to match my letterhead?","Yes. We print your logo and return address on #10, booklet and catalogue sizes, with or without a window, to match your stationery."]],
+  "labels":[["What kinds of labels can you print?","Product, shipping, address and promotional labels in paper, gloss, vinyl or static cling, with permanent or removable adhesive, on sheets or rolls."]],
+  "carbonless-forms":[["Do you print carbonless (NCR) forms?","Yes — invoices, work orders and receipts in 2-part or 3-part sets, padded or booked, with sequential numbering available."]],
+  "bindery-finishing":[["What finishing services do you offer?","Cutting, folding, scoring, perforating, drilling, numbering and shrink-wrapping — all in-house, so your job is finished properly and fast."]],
+  "booklet-binding":[["What booklet binding options are available?","Saddle-stitch and bound booklets, assembled in-house, from thin programs to thick catalogues."]],
+  "graphic-design-services":[["Can you design my print project from scratch?","Yes. Our designers can build a piece from scratch or clean up your file so it prints exactly as intended, with the right bleeds, trim and resolution."]],
+  "printing-copying-services":[["Do you do short-run and same-day copying?","Yes — colour and black-and-white copying and printing, from a few pages to long production runs, as a full-service local printer."]],
+};
+
+// ---------------------------------------------------------------- helpers
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const L = (root, p) => p === "" ? root + "index.html" : root + p + "index.html";
+const write = (rel, html) => { const full = path.join(OUT, rel); fs.mkdirSync(path.dirname(full), {recursive:true}); fs.writeFileSync(full, html); };
+const ld = o => '<script type="application/ld+json">\n' + JSON.stringify(o, null, 2) + '\n</script>';
+const urlFor = rel => "/" + rel.replace(/index\.html$/,"");
+
+function localbusiness(){ return {"@context":"https://schema.org","@type":"PrintShop","@id":BASE+"/#business","name":"The Print Shop (Collingwood) Ltd.","url":BASE+"/","telephone":"+1-705-445-2880","image":LIVE+"/8342ThePri/200xc/logo8342-horizontal608x105.png","priceRange":"$$","foundingDate":"1980","address":{"@type":"PostalAddress","streetAddress":"26 Ronell Crescent","addressLocality":"Collingwood","addressRegion":"ON","postalCode":"L9Y 4J7","addressCountry":"CA"},"geo":{"@type":"GeoCoordinates","latitude":GEO.lat,"longitude":GEO.lng},"areaServed":AREAS.map(a=>({"@type":"City","name":a})),"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday"],"opens":"08:00","closes":"17:00"}],"slogan":"Good service at a fair price."}; }
+const crumb = trail => ({"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":trail.map((t,i)=>({"@type":"ListItem","position":i+1,"name":t[0],...(t[1]?{"item":BASE+t[1]}:{})}))});
+const faqpage = items => ({"@context":"https://schema.org","@type":"FAQPage","mainEntity":items.map(([q,a])=>({"@type":"Question","name":q,"acceptedAnswer":{"@type":"Answer","text":a}}))});
+const productSchema = (n,d,u) => ({"@context":"https://schema.org","@type":"Product","name":n,"description":d,"url":BASE+u,"category":"Printing","brand":{"@type":"Brand","name":"The Print Shop (Collingwood) Ltd."},"offers":{"@type":"Offer","availability":"https://schema.org/InStock","priceCurrency":"CAD","seller":{"@id":BASE+"/#business"},"areaServed":"Collingwood, Ontario"}});
+const serviceSchema = (n,d,u) => ({"@context":"https://schema.org","@type":"Service","name":n,"description":d,"url":BASE+u,"serviceType":n,"provider":{"@id":BASE+"/#business"},"areaServed":AREAS.map(a=>({"@type":"City","name":a}))});
+
+function metaBlock(canonical, title, desc, extraLd){
+  const ogimg = LIVE+"/8342ThePri/200xc/logo8342-horizontal608x105.png";
+  const t=[`<link rel="canonical" href="${canonical}">`,`<meta property="og:type" content="website">`,`<meta property="og:site_name" content="The Print Shop (Collingwood) Ltd.">`,`<meta property="og:title" content="${esc(title)}">`,`<meta property="og:description" content="${esc(desc)}">`,`<meta property="og:url" content="${canonical}">`,`<meta property="og:image" content="${ogimg}">`,`<meta property="og:locale" content="en_CA">`,`<meta name="twitter:card" content="summary_large_image">`,`<meta name="twitter:title" content="${esc(title)}">`,`<meta name="twitter:description" content="${esc(desc)}">`,`<meta name="twitter:image" content="${ogimg}">`,`<meta name="geo.region" content="CA-ON">`,`<meta name="geo.placename" content="Collingwood">`,`<meta name="robots" content="index,follow,max-image-preview:large">`];
+  extraLd.forEach(o=>t.push(ld(o)));
+  return t.join("\n");
+}
+function faqHtml(items){
+  const rows = items.map(([q,a])=>`      <details class="faq-item">
+        <summary>${esc(q)}</summary>
+        <div class="faq-a"><p>${esc(a)}</p></div>
+      </details>`).join("\n");
+  return `
+<section class="faq" aria-labelledby="faq-h">
+  <div class="wrap">
+    <p class="eyebrow">COMMON QUESTIONS</p>
+    <h2 class="h-sec" id="faq-h">Questions, answered.</h2>
+    <div class="faq-list">
+${rows}
+    </div>
+  </div>
+</section>`;
+}
+
+function head(root, title, desc, canonical, extraLd){
+  return `<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${title}</title>
+<meta name="description" content="${esc(desc)}">
+${metaBlock(canonical,title,desc,extraLd)}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="${root}assets/style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<div class="colourbar" aria-hidden="true"><span></span><span></span><span></span><span></span></div>`;
+}
+
+function header(root){
+  const prod = PRODUCTS.map(p=>`        <a href="${L(root,"printing/"+p[0]+"/")}">${p[1]}</a>`).join("\n");
+  const svc = SERVICES.map(s=>`        <a href="${L(root,"services/"+s[0]+"/")}">${s[1]}</a>`).join("\n");
+  return `
+<div class="topbar">
+  <div class="wrap">
+    <div>Here to help — <a href="tel:${TEL}">705&nbsp;445&nbsp;2880</a></div>
+    <div>Open Monday to Friday<span class="sep">·</span>8:00&nbsp;am – 5:00&nbsp;pm</div>
+  </div>
+</div>
+<header class="site">
+  <div class="wrap nav">
+    <a class="brand" href="${L(root,'')}" aria-label="The Print Shop Collingwood, home">
+      <b class="display">THE PRINT SHOP<span class="dot">.</span></b>
+      <small>COLLINGWOOD, ONTARIO</small>
+    </a>
+    <button class="navtoggle" aria-expanded="false" aria-controls="menu">Menu</button>
+    <nav class="menu" id="menu" aria-label="Primary">
+      <div class="drop">
+        <a href="${L(root,'printing/')}">Products <span class="caret" aria-hidden="true"></span></a>
+        <div class="drop-menu">
+${prod}
+          <div class="div"></div>
+          <a class="all" href="${L(root,'printing/')}">View all products</a>
+        </div>
+      </div>
+      <div class="drop">
+        <a href="${L(root,'services/')}">Services <span class="caret" aria-hidden="true"></span></a>
+        <div class="drop-menu">
+${svc}
+          <div class="div"></div>
+          <a class="all" href="${L(root,'services/')}">View all services</a>
+        </div>
+      </div>
+      <div class="drop">
+        <a href="${LIVE}/resources/">Resources <span class="caret" aria-hidden="true"></span></a>
+        <div class="drop-menu">
+          <a href="${LIVE}/resources/the-ideas-collection/">The Ideas Collection</a>
+          <a href="${LIVE}/resources/greatest-treasures/">Greatest Treasures</a>
+          <a href="${LIVE}/resources/whats-new/">What's New</a>
+          <a href="${LIVE}/resources/popular-graphic-arts-software/">Popular Graphic Arts Software</a>
+          <div class="div"></div>
+          <a class="all" href="${LIVE}/resources/">View all resources</a>
+        </div>
+      </div>
+      <div class="drop">
+        <a href="${L(root,'feature/about-us/')}">About <span class="caret" aria-hidden="true"></span></a>
+        <div class="drop-menu">
+          <a href="${L(root,'feature/about-us/')}">About Us</a>
+          <a href="${LIVE}/feature/our-philosophy/">Our Philosophy</a>
+          <a href="${LIVE}/feature/the-environment/">The Environment</a>
+          <a href="${LIVE}/feature/portfolio/">Portfolio</a>
+          <a href="${LIVE}/feature/we-make-you-happy/">We Make You Happy</a>
+          <a href="${LIVE}/feature/our-1-boss/">Our #1 Boss…</a>
+        </div>
+      </div>
+      <a href="${L(root,'contact-us/')}">Contact</a>
+      <a class="btn sm navcta" href="${L(root,'printing/custom-printing/')}">Get an estimate</a>
+    </nav>
+  </div>
+</header>`;
+}
+
+function footer(root){
+  const prod = PRODUCTS.slice(0,6).map(p=>`          <a href="${L(root,"printing/"+p[0]+"/")}">${p[1]}</a>`).join("\n");
+  const svc = SERVICES.map(s=>`          <a href="${L(root,"services/"+s[0]+"/")}">${s[1]}</a>`).join("\n");
+  return `
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <a class="brand" href="${L(root,'')}">
+          <b class="display">THE PRINT SHOP<span style="color:var(--red)">.</span></b>
+          <small>COLLINGWOOD, ONTARIO</small>
+        </a>
+        <div class="addr">
+          26 Ronell Crescent<br>Collingwood, Ontario&nbsp; L9Y 4J7<br>
+          <a href="tel:${TEL}">${PHONE}</a><br>
+          <a href="mailto:${EMAIL}">${EMAIL}</a>
+        </div>
+      </div>
+      <div class="fcol">
+        <h4>Products</h4>
+${prod}
+          <a href="${L(root,'printing/')}" style="color:var(--red);font-weight:700">All products</a>
+      </div>
+      <div class="fcol">
+        <h4>Services</h4>
+${svc}
+      </div>
+      <div class="fcol">
+        <h4>Company</h4>
+        <a href="${L(root,'feature/about-us/')}">About Us</a>
+        <a href="${L(root,'contact-us/')}">Contact</a>
+        <a href="${L(root,'printing/custom-printing/')}">Get an estimate</a>
+        <a href="${LIVE}/account/">My Account</a>
+        <a href="${LIVE}/help-center/terms-conditions/">Terms &amp; Conditions</a>
+        <a href="${LIVE}/feature/security-privacy/">Security &amp; Privacy</a>
+      </div>
+    </div>
+    <div class="legal">
+      <span>© 2026 The Print Shop (Collingwood) Ltd. — printing in Collingwood since 1980.</span>
+      <span>Good service at a fair price.</span>
+    </div>
+  </div>
+  <div class="colourbar" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+</footer>`;
+}
+
+const NAVJS = `
+<script>
+(function(){
+  var btn=document.querySelector('.navtoggle');
+  var menu=document.getElementById('menu');
+  if(btn&&menu){
+    btn.addEventListener('click',function(){
+      var open=menu.classList.toggle('open');
+      btn.setAttribute('aria-expanded',open?'true':'false');
+    });
+  }
+})();
+</script>`;
+
+// ---------------------------------------------------------------- pages
+function buildHome(){
+  const root="";
+  const rows = PRODUCTS.map(p=>`      <a class="prod" href="${L(root,'printing/'+p[0]+'/')}">
+        <span class="name">${p[1]}</span>
+        <span class="desc">${p[2]}</span>
+        <span class="go">Start a quote</span>
+      </a>`).join("\n");
+  const svc = SERVICES.map((s,i)=>`      <a class="svc" href="${L(root,'services/'+s[0]+'/')}">
+        <h3><span class="n">${String(i+1).padStart(2,'0')}</span>${s[1]}</h3>
+        <p>${s[3][0][1]}</p>
+        <span class="more">Learn more</span>
+      </a>`).join("\n");
+  let h = head(root,"The Print Shop (Collingwood) Ltd. — Local printing, done well","Your local print shop in Collingwood, Ontario since 1980. Brochures, business cards, flyers, booklets and more — good service at a fair price.",BASE+"/",[localbusiness(),crumb([["Home","/"]])]);
+  h += header(root);
+  h += `
+<main id="main">
+<div class="hero">
+  <div class="sheet">
+    <span class="crop-b" aria-hidden="true"></span>
+    <p class="kicker">A COLLINGWOOD PRINT SHOP SINCE 1980</p>
+    <h1 class="display">Good printing, <em>done right</em> in Collingwood.</h1>
+    <p class="lede">Brochures, business cards, flyers, booklets and more — printed well, priced fairly, and ready when you need them. Bring us your file or your idea, and we'll take it from there.</p>
+    <div class="cta">
+      <a class="btn solid" href="${L(root,'printing/custom-printing/')}">Get an estimate</a>
+      <a class="btn line" href="${L(root,'printing/')}">See what we print</a>
+    </div>
+  </div>
+</div>
+<div class="promise">
+  <div class="wrap">
+    <div class="grid">
+      <div class="cell"><h3>A fair price</h3><p>No inflated quotes or surprise line items. Honest pricing on work that's built to last.</p></div>
+      <div class="cell"><h3>Real service</h3><p>Talk to the people running the press. We proof your job carefully before it ever prints.</p></div>
+      <div class="cell"><h3>Made locally</h3><p>Printed and finished right here in Collingwood, so turnaround is quick and pickup is easy.</p></div>
+    </div>
+  </div>
+</div>
+<section id="products">
+  <div class="wrap">
+    <p class="eyebrow">WHAT WE PRINT</p>
+    <h2 class="h-sec">Everything a growing business puts on paper.</h2>
+    <p class="lead">From a single box of business cards to a full run of booklets, it's all produced in-house. Pick a product to start a quote.</p>
+    <div class="prod-list">
+${rows}
+    </div>
+    <p style="margin-top:28px"><a class="btn ghost" href="${L(root,'printing/')}">View all products</a></p>
+  </div>
+</section>
+<section class="services" id="services">
+  <div class="wrap">
+    <p class="eyebrow">BEYOND THE PRESS</p>
+    <h2 class="h-sec">The finishing that makes it look finished.</h2>
+    <p class="lead">Printing is only half the job. We handle the steps that turn a stack of sheets into a proper piece.</p>
+    <div class="svc-grid">
+${svc}
+    </div>
+  </div>
+</section>
+<section id="how">
+  <div class="wrap">
+    <p class="eyebrow">HOW IT WORKS</p>
+    <h2 class="h-sec">Four steps from file to finished.</h2>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><h3>Send your file</h3><p>Email your artwork or drop by with it. Not sure it's print-ready? Send it anyway and we'll check.</p></div>
+      <div class="step"><div class="num">2</div><h3>Approve the proof</h3><p>We send a proof so you can confirm the colour, layout and copy before anything runs.</p></div>
+      <div class="step"><div class="num">3</div><h3>We print it</h3><p>Your job goes on press and through finishing, checked at each stage against your proof.</p></div>
+      <div class="step"><div class="num">4</div><h3>Pick it up</h3><p>Collect it in Collingwood or arrange delivery. Reorders are quick once we have your file.</p></div>
+    </div>
+  </div>
+</section>
+<section style="background:var(--paper-2);border-top:1px solid var(--rule)">
+  <div class="wrap" style="text-align:center">
+    <h2 class="h-sec" style="margin:0 auto">Ready to price your next job?</h2>
+    <p class="lead" style="margin:18px auto 30px">Tell us what you need and we'll get you a fair quote fast.</p>
+    <a class="btn" href="${L(root,'printing/custom-printing/')}" style="background:var(--red);border-color:var(--red)">Get an estimate</a>
+    <a class="btn ghost" href="tel:${TEL}" style="margin-left:10px">Call ${PHONE}</a>
+  </div>
+</section>
+</main>`;
+  h += footer(root) + NAVJS + "\n</body></html>";
+  write("index.html", h);
+}
+
+function buildProductsIndex(){
+  const root="../";
+  const rows = PRODUCTS.map(p=>`      <a class="prod" href="${L(root,'printing/'+p[0]+'/')}">
+        <span class="name">${p[1]}</span>
+        <span class="desc">${p[2]}</span>
+        <span class="go">View &amp; quote</span>
+      </a>`).join("\n");
+  let h = head(root,"Products — The Print Shop (Collingwood) Ltd.","Everything we print in Collingwood: business cards, brochures, flyers, postcards, booklets, labels and more.",BASE+"/printing/",[crumb([["Home","/"],["Products","/printing/"]])]);
+  h += header(root);
+  h += `
+<main id="main">
+<div class="page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="${L(root,'')}">Home</a><span class="s">/</span>Products</div>
+    <h1>What we print.</h1>
+    <p>A full-service print shop under one roof. Don't see exactly what you need? We print plenty more — just ask for a custom quote.</p>
+  </div>
+</div>
+<section>
+  <div class="wrap">
+    <div class="prod-list" style="margin-top:0">
+${rows}
+    </div>
+    <div style="margin-top:34px;padding:26px 28px;background:var(--paper-2);border:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap">
+      <div><strong style="font-size:20px">Need something not listed?</strong><br><span style="color:var(--muted)">Banners, calendars, letterhead, pocket folders, table tents and more.</span></div>
+      <a class="btn" href="${L(root,'printing/custom-printing/')}" style="background:var(--red);border-color:var(--red)">Request a custom quote</a>
+    </div>
+  </div>
+</section>
+</main>`;
+  h += footer(root) + NAVJS + "\n</body></html>";
+  write("printing/index.html", h);
+}
+
+function buildProduct(p){
+  const [slug,name,lede,body,chips,opts]=p;
+  const root="../../";
+  const bodyHtml = body.map(([hh,pp])=>`      <h2>${hh}</h2>\n      <p>${pp}</p>`).join("\n");
+  const chipsHtml = chips.map(c=>`        <li>${c}</li>`).join("\n");
+  const optsHtml = opts.map(([lab,val])=>`        <li>${lab}<span>${val}</span></li>`).join("\n");
+  const rail = PRODUCTS.filter(x=>x[0]!==slug).map(x=>`      <a href="${L(root,"printing/"+x[0]+"/")}">${x[1]}</a>`).join("\n");
+  const quote = L(root,'printing/custom-printing/')+"?product="+slug;
+  const u="/printing/"+slug+"/";
+  const extra=[productSchema(name,`${name} printed in Collingwood. ${lede} Request a fair quote from The Print Shop.`,u),crumb([["Home","/"],["Products","/printing/"],[name,u]])];
+  const faq=FAQ[slug]; if(faq) extra.push(faqpage(faq));
+  let h = head(root,`${name} — The Print Shop (Collingwood) Ltd.`,`${name} printed in Collingwood. ${lede} Request a fair quote from The Print Shop.`,BASE+u,extra);
+  h += header(root);
+  h += `
+<main id="main">
+<div class="page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="${L(root,'')}">Home</a><span class="s">/</span><a href="${L(root,'printing/')}">Products</a><span class="s">/</span>${name}</div>
+    <h1>${name}</h1>
+    <p>${lede}</p>
+  </div>
+</div>
+<section>
+  <div class="wrap">
+    <div class="detail">
+      <div class="body">
+${bodyHtml}
+        <h2>Good for</h2>
+        <ul class="chips">
+${chipsHtml}
+        </ul>
+      </div>
+      <aside class="side">
+        <h3>Get a quote</h3>
+        <p>Tell us your quantity, size and finish and we'll price it fairly — usually same day.</p>
+        <a class="btn solid" href="${quote}">Request a quote</a>
+        <a class="btn ghost" href="tel:${TEL}">Call ${PHONE}</a>
+        <ul class="opts">
+${optsHtml}
+        </ul>
+        <p style="font-size:13px;margin:14px 0 0">Options vary by job. We'll confirm the details on your estimate.</p>
+      </aside>
+    </div>
+    <div class="rail" style="margin-top:56px;padding-top:34px">
+      <h2>Other products</h2>
+      <div class="row">
+${rail}
+      </div>
+    </div>
+  </div>
+</section>${faq?faqHtml(faq):""}
+</main>`;
+  h += footer(root) + NAVJS + "\n</body></html>";
+  write(`printing/${slug}/index.html`, h);
+}
+
+function buildServicesIndex(){
+  const root="../";
+  const cells = SERVICES.map((s,i)=>`      <a class="svc" href="${L(root,'services/'+s[0]+'/')}">
+        <h3><span class="n">${String(i+1).padStart(2,'0')}</span>${s[1]}</h3>
+        <p>${s[3][0][1]}</p>
+        <span class="more">Learn more</span>
+      </a>`).join("\n");
+  let h = head(root,"Services — The Print Shop (Collingwood) Ltd.","A full-service printer in Collingwood: bindery and finishing, graphic design, booklet binding, printing and copying.",BASE+"/services/",[crumb([["Home","/"],["Services","/services/"]])]);
+  h += header(root);
+  h += `
+<main id="main">
+<div class="page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="${L(root,'')}">Home</a><span class="s">/</span>Services</div>
+    <h1>A full-service printer.</h1>
+    <p>The Print Shop is a full-service printer, which means we can do just about anything — from design through printing to the finishing that ties it all together.</p>
+  </div>
+</div>
+<section class="services" style="padding-top:64px">
+  <div class="wrap">
+    <div class="svc-grid" style="margin-top:0">
+${cells}
+    </div>
+  </div>
+</section>
+</main>`;
+  h += footer(root) + NAVJS + "\n</body></html>";
+  write("services/index.html", h);
+}
+
+function buildService(s){
+  const [slug,name,lede,body,chips]=s;
+  const root="../../";
+  const bodyHtml = body.map(([hh,pp])=>`      <h2>${hh}</h2>\n      <p>${pp}</p>`).join("\n");
+  const chipsHtml = chips.map(c=>`        <li>${c}</li>`).join("\n");
+  const u="/services/"+slug+"/";
+  const extra=[serviceSchema(name,lede,u),crumb([["Home","/"],["Services","/services/"],[name,u]])];
+  const faq=FAQ[slug]; if(faq) extra.push(faqpage(faq));
+  let h = head(root,`${name} — The Print Shop (Collingwood) Ltd.`,`${name} at The Print Shop in Collingwood. ${lede}`,BASE+u,extra);
+  h += header(root);
+  h += `
+<main id="main">
+<div class="page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="${L(root,'')}">Home</a><span class="s">/</span><a href="${L(root,'services/')}">Services</a><span class="s">/</span>${name}</div>
+    <h1>${name}</h1>
+    <p>${lede}</p>
+  </div>
+</div>
+<section>
+  <div class="wrap">
+    <div class="detail">
+      <div class="body">
+${bodyHtml}
+        <h2>What we handle</h2>
+        <ul class="chips">
+${chipsHtml}
+        </ul>
+      </div>
+      <aside class="side">
+        <h3>Talk it through</h3>
+        <p>Not sure what your job needs? Tell us about it and we'll point you the right way.</p>
+        <a class="btn solid" href="${L(root,'printing/custom-printing/')}">Get an estimate</a>
+        <a class="btn ghost" href="tel:${TEL}">Call ${PHONE}</a>
+      </aside>
+    </div>
+  </div>
+</section>${faq?faqHtml(faq):""}
+</main>`;
+  h += footer(root) + NAVJS + "\n</body></html>";
+  write(`services/${slug}/index.html`, h);
+}
+
+function buildAbout(){
+  const root="../../";
+  let h = head(root,"About Us — The Print Shop (Collingwood) Ltd.","Printing in Collingwood since 1980, on the principle of good service at a fair price.",BASE+"/feature/about-us/",[crumb([["Home","/"],["About Us","/feature/about-us/"]])]);
+  h += header(root);
+  h += `
+<main id="main">
+<div class="page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="${L(root,'')}">Home</a><span class="s">/</span>About Us</div>
+    <h1>Printing in Collingwood since 1980.</h1>
+    <p>Good service at a fair price — the principle we've held to for more than four decades.</p>
+  </div>
+</div>
+<section>
+  <div class="wrap rich">
+    <p>When you need printing for your business, organisation or institution, you want a printer who delivers quality work, competitive rates and fast turnaround. It's tempting to look only at price — but the cheapest quote isn't a bargain if the printing is substandard.</p>
+    <p>Since 1980, The Print Shop (Collingwood) Ltd. has built its reputation by understanding what customers actually need and providing the range of services to meet it — fair prices, without compromising on quality.</p>
+    <blockquote>We're in the business of printing, but what we produce is bigger than ink and toner on paper. We print your ideas — and help tell your story.</blockquote>
+    <h2>How we work</h2>
+    <p>Everything happens under one roof: design, printing, and the bindery and finishing that turn a stack of sheets into a finished piece. That keeps quality consistent and turnaround quick, and it means you're always talking to the people doing the work.</p>
+    <p>We measure our success by yours. If your printing helps your business do better, we've done our job.</p>
+    <div class="sig">Michael P. Donovan
+      <span>Owner · <a href="mailto:michael@theprintshops.ca" style="color:var(--red);text-decoration:none">michael@theprintshops.ca</a></span>
+    </div>
+    <p style="margin-top:36px"><a class="btn" href="${L(root,'printing/custom-printing/')}" style="background:var(--red);border-color:var(--red)">Get an estimate</a>
+      <a class="btn ghost" href="${L(root,'contact-us/')}" style="margin-left:10px">Contact us</a></p>
+  </div>
+</section>
+</main>`;
+  h += footer(root) + NAVJS + "\n</body></html>";
+  write("feature/about-us/index.html", h);
+}
+
+function buildContact(){
+  const root="../";
+  const mapq="26+Ronell+Crescent+Collingwood+Ontario+L9Y+4J7";
+  let h = head(root,"Contact — The Print Shop (Collingwood) Ltd.","Visit or call The Print Shop at 26 Ronell Crescent, Collingwood, Ontario. Phone 705 445 2880.",BASE+"/contact-us/",[crumb([["Home","/"],["Contact","/contact-us/"]])]);
+  h += header(root);
+  h += `
+<main id="main">
+<div class="page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="${L(root,'')}">Home</a><span class="s">/</span>Contact</div>
+    <h1>Come by, call, or send us a file.</h1>
+    <p>We're on Ronell Crescent in Collingwood, open weekdays. However you reach us, you'll talk to someone who can help.</p>
+  </div>
+</div>
+<section>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <dl class="info">
+          <dt class="first">CALL US</dt>
+          <dd><a href="tel:${TEL}">${PHONE}</a></dd>
+          <dt>EMAIL</dt>
+          <dd><a href="mailto:${EMAIL}">${EMAIL}</a></dd>
+          <dt>VISIT</dt>
+          <dd>26 Ronell Crescent<br>Collingwood, Ontario&nbsp; L9Y 4J7</dd>
+          <dt>HOURS</dt>
+          <dd>Monday to Friday<br>8:00&nbsp;am – 5:00&nbsp;pm</dd>
+        </dl>
+        <div class="map">
+          <iframe title="Map to The Print Shop, 26 Ronell Crescent, Collingwood"
+            src="https://www.google.com/maps?q=${mapq}&output=embed" loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+      </div>
+      <div class="quote-form">
+        <h2>Get a free estimate</h2>
+        <p class="note">Tell us what you need printed and we'll get back to you with a fair quote.</p>
+        <a class="btn solid" href="${L(root,'printing/custom-printing/')}" style="display:block;text-align:center">Start an estimate request</a>
+        <p style="margin:22px 0 0;font-size:15px;color:var(--muted)">Prefer to send artwork? Email your file to <a href="mailto:${EMAIL}" style="color:var(--red)">${EMAIL}</a> and we'll confirm it's print-ready.</p>
+      </div>
+    </div>
+  </div>
+</section>
+</main>`;
+  h += footer(root) + NAVJS + "\n</body></html>";
+  write("contact-us/index.html", h);
+}
+
+function buildQuote(){
+  const root="../../";
+  const opts = PRODUCTS.map(p=>`<option value="${p[1]}">${p[1]}</option>`).join("");
+  let h = head(root,"Request a Quote — The Print Shop (Collingwood) Ltd.","Request a free printing estimate from The Print Shop in Collingwood. Tell us your product, quantity and finish.",BASE+"/printing/custom-printing/",[crumb([["Home","/"],["Products","/printing/"],["Request a quote","/printing/custom-printing/"]])]);
+  h += header(root);
+  h += `
+<main id="main">
+<div class="page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="${L(root,'')}">Home</a><span class="s">/</span><a href="${L(root,'printing/')}">Products</a><span class="s">/</span>Request a quote</div>
+    <h1>Request a free estimate.</h1>
+    <p>The more you can tell us, the faster and more accurate your quote. Don't have every detail? Send what you have and we'll fill in the gaps.</p>
+  </div>
+</div>
+<section>
+  <div class="wrap">
+    <div class="cols">
+      <form class="quote-form" id="quoteForm" novalidate>
+        <h2>Your print job</h2>
+        <p class="note">Fields marked <span style="color:var(--red)">*</span> are required.</p>
+        <div class="two">
+          <div class="field"><label for="name">Name <span class="req">*</span></label><input id="name" name="name" type="text" autocomplete="name" required></div>
+          <div class="field"><label for="company">Company</label><input id="company" name="company" type="text" autocomplete="organization"></div>
+        </div>
+        <div class="two">
+          <div class="field"><label for="email">Email <span class="req">*</span></label><input id="email" name="email" type="email" autocomplete="email" required></div>
+          <div class="field"><label for="phone">Phone <span class="req">*</span></label><input id="phone" name="phone" type="tel" autocomplete="tel" required></div>
+        </div>
+        <div class="two">
+          <div class="field"><label for="product">Product</label><select id="product" name="product"><option value="">Select a product…</option>${opts}<option value="Other / custom">Other / custom</option></select></div>
+          <div class="field"><label for="qty">Quantity</label><input id="qty" name="qty" type="text" placeholder="e.g. 500"></div>
+        </div>
+        <div class="field"><label for="size">Size or finish</label><input id="size" name="size" type="text" placeholder="e.g. 8.5×11, double-sided, gloss"></div>
+        <div class="field"><label for="details">Job details <span class="req">*</span></label><textarea id="details" name="details" placeholder="Tell us about the job — deadline, stock, colours, and anything else that helps." required></textarea></div>
+        <button class="btn solid" type="submit">Request my estimate</button>
+        <div class="form-msg" id="formMsg"></div>
+        <p style="font-size:13px;color:var(--muted);margin:16px 0 0">Have artwork ready? Email it to <a href="mailto:${EMAIL}" style="color:var(--red)">${EMAIL}</a> after you send this.</p>
+      </form>
+      <aside class="aside-quote">
+        <h3>What to include</h3>
+        <ul>
+          <li><b>1</b><span>The product and roughly how many you need.</span></li>
+          <li><b>2</b><span>Size, sides (single or double), and any coating or finish.</span></li>
+          <li><b>3</b><span>Your deadline, so we can plan the press schedule.</span></li>
+          <li><b>4</b><span>Whether you have print-ready artwork or need design help.</span></li>
+        </ul>
+        <p style="margin-top:22px;color:var(--muted);font-size:16px">Rather talk it through?</p>
+        <a class="btn" href="tel:${TEL}" style="background:var(--red);border-color:var(--red);display:inline-block;margin-top:6px">Call ${PHONE}</a>
+      </aside>
+    </div>
+  </div>
+</section>
+</main>`;
+  h += footer(root);
+  h += `
+<script>
+(function(){
+  var btn=document.querySelector('.navtoggle');
+  var menu=document.getElementById('menu');
+  if(btn&&menu){btn.addEventListener('click',function(){var o=menu.classList.toggle('open');btn.setAttribute('aria-expanded',o?'true':'false');});}
+  var params=new URLSearchParams(window.location.search);
+  var slug=params.get('product');
+  var names=${JSON.stringify(Object.fromEntries(PRODUCTS.map(p=>[p[0],p[1]])))};
+  if(slug&&names[slug]){
+    var sel=document.getElementById('product');
+    for(var i=0;i<sel.options.length;i++){if(sel.options[i].value===names[slug]){sel.selectedIndex=i;break;}}
+  }
+  var form=document.getElementById('quoteForm');
+  var msg=document.getElementById('formMsg');
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var required=['name','email','phone','details'];
+    for(var i=0;i<required.length;i++){
+      var el=document.getElementById(required[i]);
+      if(!el.value.trim()){el.focus();msg.textContent='Please fill in the required fields so we can reach you.';msg.classList.add('show');return;}
+    }
+    var body='Estimate request from the website:%0D%0A%0D%0A'
+      +'Name: '+encodeURIComponent(document.getElementById('name').value)+'%0D%0A'
+      +'Company: '+encodeURIComponent(document.getElementById('company').value)+'%0D%0A'
+      +'Email: '+encodeURIComponent(document.getElementById('email').value)+'%0D%0A'
+      +'Phone: '+encodeURIComponent(document.getElementById('phone').value)+'%0D%0A'
+      +'Product: '+encodeURIComponent(document.getElementById('product').value)+'%0D%0A'
+      +'Quantity: '+encodeURIComponent(document.getElementById('qty').value)+'%0D%0A'
+      +'Size/finish: '+encodeURIComponent(document.getElementById('size').value)+'%0D%0A%0D%0A'
+      +'Details:%0D%0A'+encodeURIComponent(document.getElementById('details').value);
+    msg.innerHTML='Thanks — your email app will open with the request ready to send. Prefer to call? '+
+      '<a href="tel:${TEL}" style="color:var(--red)">${PHONE}</a>.';
+    msg.classList.add('show');
+    window.location.href='mailto:${EMAIL}?subject=Estimate%20request&body='+body;
+  });
+})();
+</script>`;
+  h += "\n</body></html>";
+  write("printing/custom-printing/index.html", h);
+}
+
+// ---------------------------------------------------------------- aux
+function aux(){
+  const pages=["index.html","printing/index.html","services/index.html","feature/about-us/index.html","contact-us/index.html","printing/custom-printing/index.html"]
+    .concat(PRODUCTS.map(p=>`printing/${p[0]}/index.html`))
+    .concat(SERVICES.map(s=>`services/${s[0]}/index.html`));
+  const locs=[...new Set(pages.map(p=>BASE+urlFor(p)))].sort();
+  let sm=['<?xml version="1.0" encoding="UTF-8"?>','<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'];
+  for(const u of locs){ const pr = u===BASE+"/"?"1.0":((u.includes("/printing/")||u.includes("/services/"))?"0.8":"0.6"); sm.push(`  <url><loc>${u}</loc><changefreq>monthly</changefreq><priority>${pr}</priority></url>`); }
+  sm.push("</urlset>");
+  write("sitemap.xml", sm.join("\n"));
+  write("robots.txt", `User-agent: *\nAllow: /\n\n# Answer engines welcome\nUser-agent: GPTBot\nAllow: /\nUser-agent: OAI-SearchBot\nAllow: /\nUser-agent: PerplexityBot\nAllow: /\nUser-agent: ClaudeBot\nAllow: /\nUser-agent: Google-Extended\nAllow: /\n\nSitemap: ${BASE}/sitemap.xml\n`);
+  write("llms.txt", `# The Print Shop (Collingwood) Ltd.\n\n> Local, full-service print shop in Collingwood, Ontario, serving the Georgian Bay area since 1980. Good service at a fair price.\n\n## About\nThe Print Shop (Collingwood) Ltd. is a full-service printer in Collingwood, Ontario. Family-run reputation since 1980. Design, printing, bindery and finishing are all done in-house, so work is consistent, fast, and picked up locally — no shipping wait.\n\n## Contact\n- Phone: 705 445 2880\n- Address: 26 Ronell Crescent, Collingwood, Ontario L9Y 4J7, Canada\n- Hours: Monday to Friday, 8:00 am – 5:00 pm\n- Request a free estimate: ${BASE}/printing/custom-printing/\n\n## Areas served\n${AREAS.join(", ")}\n\n## Products\nBusiness cards, brochures, flyers, postcards, booklets, sell sheets, rack cards, door hangers, newsletters, envelopes, labels, carbonless (NCR) forms, and more. Full list: ${BASE}/printing/\n\n## Services\nBindery & finishing, graphic design, booklet binding, printing & copying. Full list: ${BASE}/services/\n\n## Why choose a local printer\nUnlike online printers shipped from away, The Print Shop offers real people who check your file, local pickup with no shipping wait, in-house design help, and 45 years of local experience.\n`);
+}
+
+// ---------------------------------------------------------------- run
+fs.rmSync(OUT, {recursive:true, force:true});
+fs.mkdirSync(OUT, {recursive:true});
+fs.mkdirSync(path.join(OUT,"assets"), {recursive:true});
+fs.writeFileSync(path.join(OUT,"assets","style.css"), fs.readFileSync(path.join(__dirname,"style.css")));
+buildHome();
+buildProductsIndex();
+PRODUCTS.forEach(buildProduct);
+buildServicesIndex();
+SERVICES.forEach(buildService);
+buildAbout();
+buildContact();
+buildQuote();
+aux();
+let count=0;(function w(d){for(const e of fs.readdirSync(d,{withFileTypes:true})){const fp=path.join(d,e.name);if(e.isDirectory())w(fp);else if(e.name.endsWith(".html"))count++;}})(OUT);
+console.log("Built "+count+" HTML pages to "+OUT);
