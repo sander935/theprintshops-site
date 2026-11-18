@@ -162,6 +162,12 @@ ${metaBlock(canonical,title,desc,extraLd)}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="icon" href="${root}favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="${root}favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="${root}favicon-16.png">
+<link rel="apple-touch-icon" href="${root}apple-touch-icon.png">
+<link rel="manifest" href="${root}site.webmanifest">
+<meta name="theme-color" content="#1a1a1a">
 <link rel="stylesheet" href="${root}assets/style.css">
 </head>
 <body>
@@ -807,6 +813,9 @@ fs.rmSync(OUT, {recursive:true, force:true});
 fs.mkdirSync(OUT, {recursive:true});
 fs.mkdirSync(path.join(OUT,"assets"), {recursive:true});
 fs.writeFileSync(path.join(OUT,"assets","style.css"), fs.readFileSync(path.join(__dirname,"style.css")));
+// site icons (favicon, apple-touch-icon, manifest) are served from the site root
+const ICONS = path.join(__dirname,"icons");
+if (fs.existsSync(ICONS)) for (const f of fs.readdirSync(ICONS)) fs.copyFileSync(path.join(ICONS,f), path.join(OUT,f));
 buildHome();
 buildProductsIndex();
 PRODUCTS.forEach(buildProduct);
