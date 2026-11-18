@@ -292,6 +292,78 @@ const NAVJS = `
 })();
 </script>`;
 
+// ---------------------------------------------------------------- quote pop-up (modal)
+const QM_OPTS = PRODUCTS.map(p=>`<option value="${p[1]}">${p[1]}</option>`).join("");
+const QM_NAMES = JSON.stringify(Object.fromEntries(PRODUCTS.map(p=>[p[0],p[1]])));
+const MODAL = `
+<div class="qm-overlay" id="qmOverlay" role="dialog" aria-modal="true" aria-labelledby="qmTitle" aria-hidden="true">
+  <div class="qm" role="document">
+    <div class="colourbar" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+    <button class="qm-close" id="qmClose" type="button" aria-label="Close">&times;</button>
+    <div class="qm-inner">
+      <h2 id="qmTitle">Get a free estimate</h2>
+      <p class="qm-sub">Tell us what you need and we'll reply with a fair price — usually the same day.</p>
+      <form id="qmForm" novalidate>
+        <div class="two">
+          <div class="field"><label for="qm_name">Name <span class="req">*</span></label><input id="qm_name" type="text" autocomplete="name"></div>
+          <div class="field"><label for="qm_phone">Phone <span class="req">*</span></label><input id="qm_phone" type="tel" autocomplete="tel"></div>
+        </div>
+        <div class="field"><label for="qm_email">Email <span class="req">*</span></label><input id="qm_email" type="email" autocomplete="email"></div>
+        <div class="field"><label for="qm_product">Product</label><select id="qm_product"><option value="">Select a product…</option>${QM_OPTS}<option value="Other / custom">Other / custom</option></select></div>
+        <div class="field"><label for="qm_details">What do you need? <span class="req">*</span></label><textarea id="qm_details" placeholder="Quantity, size, finish, deadline…"></textarea></div>
+        <button class="btn solid" type="submit">Request my estimate</button>
+        <div class="qm-msg" id="qmMsg"></div>
+        <p class="qm-call">Prefer to call? <a href="tel:+17054452880">705 445 2880</a></p>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var ov=document.getElementById('qmOverlay'); if(!ov) return;
+  var form=document.getElementById('qmForm'), msg=document.getElementById('qmMsg'), sel=document.getElementById('qm_product');
+  var names=${QM_NAMES}, lastFocus=null;
+  function openModal(slug){
+    lastFocus=document.activeElement;
+    if(slug&&sel){var want=names[slug]||slug;for(var i=0;i<sel.options.length;i++){if(sel.options[i].value===want){sel.selectedIndex=i;break;}}}
+    ov.classList.add('open');ov.setAttribute('aria-hidden','false');document.body.classList.add('qm-lock');
+    var n=document.getElementById('qm_name');if(n)n.focus();
+    try{localStorage.setItem('tps_quote_seen',String(Date.now()));}catch(e){}
+  }
+  function closeModal(){ov.classList.remove('open');ov.setAttribute('aria-hidden','true');document.body.classList.remove('qm-lock');if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+  window.openQuoteModal=openModal;
+  document.getElementById('qmClose').addEventListener('click',closeModal);
+  ov.addEventListener('click',function(e){if(e.target===ov)closeModal();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&ov.classList.contains('open'))closeModal();});
+  document.addEventListener('click',function(e){
+    var a=e.target.closest?e.target.closest('a[href*="printing/custom-printing/"]'):null;
+    if(a){e.preventDefault();var m=a.getAttribute('href').match(/[?&]product=([^&]+)/);openModal(m?decodeURIComponent(m[1]):'');}
+  });
+  var onQuote=/\\/printing\\/custom-printing\\//.test(location.pathname);
+  if(!onQuote){
+    var seen=0;try{seen=parseInt(localStorage.getItem('tps_quote_seen')||'0',10);}catch(e){}
+    if(!seen||(Date.now()-seen)>604800000){setTimeout(function(){if(!ov.classList.contains('open'))openModal('');},18000);}
+  }
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var name=document.getElementById('qm_name').value.trim();
+    var email=document.getElementById('qm_email').value.trim();
+    var phone=document.getElementById('qm_phone').value.trim();
+    var details=document.getElementById('qm_details').value.trim();
+    if(!name||!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)||!phone||!details){msg.innerHTML='Please add your name, a valid email, phone, and what you need.';msg.classList.add('show');return;}
+    var body='Quote request from the website pop-up:%0D%0A%0D%0A'
+      +'Name: '+encodeURIComponent(name)+'%0D%0A'
+      +'Email: '+encodeURIComponent(email)+'%0D%0A'
+      +'Phone: '+encodeURIComponent(phone)+'%0D%0A'
+      +'Product: '+encodeURIComponent(sel?sel.value:'')+'%0D%0A%0D%0A'
+      +'Details:%0D%0A'+encodeURIComponent(details);
+    msg.innerHTML='Thanks — your email app is opening with the request ready to send. Prefer to call? <a href="tel:+17054452880" style="color:var(--red)">705 445 2880</a>.';
+    msg.classList.add('show');
+    window.location.href='mailto:info@theprintshops.ca?subject=Quote%20request&body='+body;
+  });
+})();
+</script>`;
+
 // ---------------------------------------------------------------- pages
 function buildHome(){
   const root="";
@@ -372,7 +444,7 @@ ${svc}
   </div>
 </section>
 </main>`;
-  h += footer(root) + NAVJS + "\n</body></html>";
+  h += footer(root) + MODAL + NAVJS + "\n</body></html>";
   write("index.html", h);
 }
 
@@ -406,7 +478,7 @@ ${rows}
   </div>
 </section>
 </main>`;
-  h += footer(root) + NAVJS + "\n</body></html>";
+  h += footer(root) + MODAL + NAVJS + "\n</body></html>";
   write("printing/index.html", h);
 }
 
@@ -462,7 +534,7 @@ ${rail}
   </div>
 </section>${faq?faqHtml(faq):""}
 </main>`;
-  h += footer(root) + NAVJS + "\n</body></html>";
+  h += footer(root) + MODAL + NAVJS + "\n</body></html>";
   write(`printing/${slug}/index.html`, h);
 }
 
@@ -492,7 +564,7 @@ ${cells}
   </div>
 </section>
 </main>`;
-  h += footer(root) + NAVJS + "\n</body></html>";
+  h += footer(root) + MODAL + NAVJS + "\n</body></html>";
   write("services/index.html", h);
 }
 
@@ -535,7 +607,7 @@ ${chipsHtml}
   </div>
 </section>${faq?faqHtml(faq):""}
 </main>`;
-  h += footer(root) + NAVJS + "\n</body></html>";
+  h += footer(root) + MODAL + NAVJS + "\n</body></html>";
   write(`services/${slug}/index.html`, h);
 }
 
@@ -568,7 +640,7 @@ function buildAbout(){
   </div>
 </section>
 </main>`;
-  h += footer(root) + NAVJS + "\n</body></html>";
+  h += footer(root) + MODAL + NAVJS + "\n</body></html>";
   write("feature/about-us/index.html", h);
 }
 
@@ -616,7 +688,7 @@ function buildContact(){
   </div>
 </section>
 </main>`;
-  h += footer(root) + NAVJS + "\n</body></html>";
+  h += footer(root) + MODAL + NAVJS + "\n</body></html>";
   write("contact-us/index.html", h);
 }
 
@@ -673,7 +745,7 @@ function buildQuote(){
   </div>
 </section>
 </main>`;
-  h += footer(root);
+  h += footer(root) + MODAL;
   h += `
 <script>
 (function(){

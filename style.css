@@ -249,3 +249,32 @@ footer{background:var(--paper-2);border-top:1px solid var(--rule)}
 .faq-item[open] summary::after{content:"\2013"}
 .faq-a{padding:0 6px 20px 0}
 .faq-a p{color:var(--muted);margin:0;max-width:65ch}
+
+/* Quote pop-up (modal) */
+.qm-overlay{position:fixed;inset:0;background:rgba(26,26,26,.6);display:none;align-items:center;justify-content:center;z-index:1000;padding:24px}
+.qm-overlay.open{display:flex}
+.qm{background:var(--paper);max-width:560px;width:100%;max-height:92vh;overflow:auto;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.qm .colourbar{height:8px}
+.qm-close{position:absolute;top:12px;right:14px;background:none;border:0;font-size:30px;line-height:1;color:var(--muted);cursor:pointer;padding:6px;z-index:2}
+.qm-close:hover{color:var(--red)}
+.qm-inner{padding:30px 34px 28px}
+.qm-inner h2{font-family:"Anton",sans-serif;font-weight:400;font-size:30px;margin:0 0 4px;line-height:1.05}
+.qm-sub{color:var(--muted);font-size:16px;margin:0 0 20px}
+.qm .field{margin-bottom:14px}
+.qm .field label{display:block;font-weight:600;font-size:13px;margin-bottom:5px}
+.qm .field label .req{color:var(--red)}
+.qm input,.qm select,.qm textarea{width:100%;padding:11px 13px;border:1px solid #cfc9bc;background:#fff;font:inherit;font-size:16px;color:var(--ink)}
+.qm input:focus,.qm select:focus,.qm textarea:focus{outline:3px solid var(--red);outline-offset:1px;border-color:var(--red)}
+.qm textarea{min-height:84px;resize:vertical}
+.qm .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:480px){.qm .two{grid-template-columns:1fr}}
+.qm .btn.solid{background:var(--red);border-color:var(--red);color:#fff;width:100%;margin-top:2px;text-align:center}
+.qm .btn.solid:hover{background:var(--red-dark);border-color:var(--red-dark)}
+.qm-msg{display:none;margin-top:12px;padding:12px 14px;border-left:4px solid var(--red);background:var(--paper-2);font-size:14px}
+.qm-msg.show{display:block}
+.qm-call{margin:14px 0 0;font-size:14px;color:var(--muted)}
+.qm-call a{color:var(--red);font-weight:600;text-decoration:none}
+body.qm-lock{overflow:hidden}
+@keyframes qmRise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.qm-overlay.open .qm{animation:qmRise .22s ease-out}
+@media (prefers-reduced-motion:reduce){.qm-overlay.open .qm{animation:none}}
