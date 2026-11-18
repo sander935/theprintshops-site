@@ -377,7 +377,7 @@ const MODAL = `
       window.location.href='mailto:info@theprintshops.ca?subject=Quote%20request&body='+body;
     }
     btn.disabled=true;msg.innerHTML='Sending…';msg.classList.add('show');
-    fetch('/api/quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    fetch('/api/quote/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       source:'Website pop-up',name:name,email:email,phone:phone,product:product,details:details,
       website:(document.getElementById('qm_website')||{}).value||''
     })}).then(function(r){return r.json().catch(function(){return {};});})
@@ -818,7 +818,7 @@ function buildQuote(){
       window.location.href='mailto:${EMAIL}?subject=Estimate%20request&body='+body;
     }
     btn.disabled=true;msg.textContent='Sending…';msg.classList.add('show');
-    fetch('/api/quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    fetch('/api/quote/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       source:'Quote page',name:v('name'),company:v('company'),email:v('email'),phone:v('phone'),
       product:v('product'),qty:v('qty'),size:v('size'),details:v('details'),website:v('q_website')
     })}).then(function(r){return r.json().catch(function(){return {};});})
