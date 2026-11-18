@@ -280,3 +280,7 @@ body.qm-lock{overflow:hidden}
 @keyframes qmRise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 .qm-overlay.open .qm{animation:qmRise .22s ease-out}
 @media (prefers-reduced-motion:reduce){.qm-overlay.open .qm{animation:none}}
+
+/* Form spam trap (hidden from people, visible to bots) + sending state */
+.hp{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden}
+.btn:disabled{opacity:.6;cursor:wait}

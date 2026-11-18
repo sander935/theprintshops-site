@@ -310,6 +310,7 @@ const MODAL = `
       <h2 id="qmTitle">Get a free estimate</h2>
       <p class="qm-sub">Tell us what you need and we'll reply with a fair price — usually the same day.</p>
       <form id="qmForm" novalidate>
+        <div class="hp" aria-hidden="true"><label>Leave this empty<input id="qm_website" type="text" tabindex="-1" autocomplete="off"></label></div>
         <div class="two">
           <div class="field"><label for="qm_name">Name <span class="req">*</span></label><input id="qm_name" type="text" autocomplete="name"></div>
           <div class="field"><label for="qm_phone">Phone <span class="req">*</span></label><input id="qm_phone" type="tel" autocomplete="tel"></div>
@@ -357,15 +358,32 @@ const MODAL = `
     var phone=document.getElementById('qm_phone').value.trim();
     var details=document.getElementById('qm_details').value.trim();
     if(!name||!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)||!phone||!details){msg.innerHTML='Please add your name, a valid email, phone, and what you need.';msg.classList.add('show');return;}
-    var body='Quote request from the website pop-up:%0D%0A%0D%0A'
-      +'Name: '+encodeURIComponent(name)+'%0D%0A'
-      +'Email: '+encodeURIComponent(email)+'%0D%0A'
-      +'Phone: '+encodeURIComponent(phone)+'%0D%0A'
-      +'Product: '+encodeURIComponent(sel?sel.value:'')+'%0D%0A%0D%0A'
-      +'Details:%0D%0A'+encodeURIComponent(details);
-    msg.innerHTML='Thanks — your email app is opening with the request ready to send. Prefer to call? <a href="tel:+17054452880" style="color:var(--red)">705 445 2880</a>.';
-    msg.classList.add('show');
-    window.location.href='mailto:info@theprintshops.ca?subject=Quote%20request&body='+body;
+    var product=sel?sel.value:'';
+    var btn=form.querySelector('button[type=submit]');
+    function done(){
+      form.reset();
+      msg.innerHTML='Thanks — we have your request and will reply with a price, usually the same business day. Questions? Call <a href="tel:+17054452880" style="color:var(--red)">705 445 2880</a>.';
+      msg.classList.add('show');
+    }
+    function fallback(){
+      var body='Quote request from the website pop-up:%0D%0A%0D%0A'
+        +'Name: '+encodeURIComponent(name)+'%0D%0A'
+        +'Email: '+encodeURIComponent(email)+'%0D%0A'
+        +'Phone: '+encodeURIComponent(phone)+'%0D%0A'
+        +'Product: '+encodeURIComponent(product)+'%0D%0A%0D%0A'
+        +'Details:%0D%0A'+encodeURIComponent(details);
+      msg.innerHTML='Thanks — your email app is opening with the request ready to send. Prefer to call? <a href="tel:+17054452880" style="color:var(--red)">705 445 2880</a>.';
+      msg.classList.add('show');
+      window.location.href='mailto:info@theprintshops.ca?subject=Quote%20request&body='+body;
+    }
+    btn.disabled=true;msg.innerHTML='Sending…';msg.classList.add('show');
+    fetch('/api/quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      source:'Website pop-up',name:name,email:email,phone:phone,product:product,details:details,
+      website:(document.getElementById('qm_website')||{}).value||''
+    })}).then(function(r){return r.json().catch(function(){return {};});})
+      .then(function(j){if(j&&j.ok)done();else fallback();})
+      .catch(fallback)
+      .then(function(){btn.disabled=false;});
   });
 })();
 </script>`;
@@ -716,6 +734,7 @@ function buildQuote(){
   <div class="wrap">
     <div class="cols">
       <form class="quote-form" id="quoteForm" novalidate>
+        <div class="hp" aria-hidden="true"><label>Leave this empty<input id="q_website" type="text" tabindex="-1" autocomplete="off"></label></div>
         <h2>Your print job</h2>
         <p class="note">Fields marked <span style="color:var(--red)">*</span> are required.</p>
         <div class="two">
@@ -774,19 +793,38 @@ function buildQuote(){
       var el=document.getElementById(required[i]);
       if(!el.value.trim()){el.focus();msg.textContent='Please fill in the required fields so we can reach you.';msg.classList.add('show');return;}
     }
-    var body='Estimate request from the website:%0D%0A%0D%0A'
-      +'Name: '+encodeURIComponent(document.getElementById('name').value)+'%0D%0A'
-      +'Company: '+encodeURIComponent(document.getElementById('company').value)+'%0D%0A'
-      +'Email: '+encodeURIComponent(document.getElementById('email').value)+'%0D%0A'
-      +'Phone: '+encodeURIComponent(document.getElementById('phone').value)+'%0D%0A'
-      +'Product: '+encodeURIComponent(document.getElementById('product').value)+'%0D%0A'
-      +'Quantity: '+encodeURIComponent(document.getElementById('qty').value)+'%0D%0A'
-      +'Size/finish: '+encodeURIComponent(document.getElementById('size').value)+'%0D%0A%0D%0A'
-      +'Details:%0D%0A'+encodeURIComponent(document.getElementById('details').value);
-    msg.innerHTML='Thanks — your email app will open with the request ready to send. Prefer to call? '+
-      '<a href="tel:${TEL}" style="color:var(--red)">${PHONE}</a>.';
-    msg.classList.add('show');
-    window.location.href='mailto:${EMAIL}?subject=Estimate%20request&body='+body;
+    if(!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(document.getElementById('email').value.trim())){document.getElementById('email').focus();msg.textContent='Please enter a valid email address so we can reply.';msg.classList.add('show');return;}
+    var v=function(id){return document.getElementById(id).value;};
+    var btn=form.querySelector('button[type=submit]');
+    function done(){
+      form.reset();
+      msg.innerHTML='Thanks — we have your request and will reply with a price, usually the same business day. Questions? Call '+
+        '<a href="tel:${TEL}" style="color:var(--red)">${PHONE}</a>.';
+      msg.classList.add('show');
+    }
+    function fallback(){
+      var body='Estimate request from the website:%0D%0A%0D%0A'
+        +'Name: '+encodeURIComponent(v('name'))+'%0D%0A'
+        +'Company: '+encodeURIComponent(v('company'))+'%0D%0A'
+        +'Email: '+encodeURIComponent(v('email'))+'%0D%0A'
+        +'Phone: '+encodeURIComponent(v('phone'))+'%0D%0A'
+        +'Product: '+encodeURIComponent(v('product'))+'%0D%0A'
+        +'Quantity: '+encodeURIComponent(v('qty'))+'%0D%0A'
+        +'Size/finish: '+encodeURIComponent(v('size'))+'%0D%0A%0D%0A'
+        +'Details:%0D%0A'+encodeURIComponent(v('details'));
+      msg.innerHTML='Thanks — your email app will open with the request ready to send. Prefer to call? '+
+        '<a href="tel:${TEL}" style="color:var(--red)">${PHONE}</a>.';
+      msg.classList.add('show');
+      window.location.href='mailto:${EMAIL}?subject=Estimate%20request&body='+body;
+    }
+    btn.disabled=true;msg.textContent='Sending…';msg.classList.add('show');
+    fetch('/api/quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      source:'Quote page',name:v('name'),company:v('company'),email:v('email'),phone:v('phone'),
+      product:v('product'),qty:v('qty'),size:v('size'),details:v('details'),website:v('q_website')
+    })}).then(function(r){return r.json().catch(function(){return {};});})
+      .then(function(j){if(j&&j.ok)done();else fallback();})
+      .catch(fallback)
+      .then(function(){btn.disabled=false;});
   });
 })();
 </script>`;
