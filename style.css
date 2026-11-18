@@ -64,6 +64,8 @@ nav.menu{display:flex;gap:8px;align-items:center}
 .btn.sm{padding:9px 16px;font-size:15px}
 .navtoggle{display:none;background:none;border:2px solid var(--ink);padding:8px 12px;font-weight:700;cursor:pointer}
 .menu .navcta{margin-left:6px}
+.menu > a.navcta{color:var(--paper)}
+.menu > a.navcta:hover{color:#fff;background:var(--red);border-color:var(--red)}
 
 /* generic section */
 section{padding:80px 0}
