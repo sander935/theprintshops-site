@@ -50,17 +50,32 @@
       "permanent": true
     },
     {
-      "source": "/help-center/:path*",
+      "source": "/help-center{/}?",
       "destination": "/contact-us/",
       "permanent": true
     },
     {
-      "source": "/resources/:path*",
+      "source": "/help-center/(.*)",
+      "destination": "/contact-us/",
+      "permanent": true
+    },
+    {
+      "source": "/resources{/}?",
       "destination": "/",
       "permanent": true
     },
     {
-      "source": "/account/:path*",
+      "source": "/resources/(.*)",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/account{/}?",
+      "destination": "/contact-us/",
+      "permanent": true
+    },
+    {
+      "source": "/account/(.*)",
       "destination": "/contact-us/",
       "permanent": true
     },
