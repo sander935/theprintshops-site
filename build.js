@@ -121,15 +121,15 @@ const write = (rel, html) => { const full = path.join(OUT, rel); fs.mkdirSync(pa
 const ld = o => '<script type="application/ld+json">\n' + JSON.stringify(o, null, 2) + '\n</script>';
 const urlFor = rel => "/" + rel.replace(/index\.html$/,"");
 
-function localbusiness(){ return {"@context":"https://schema.org","@type":"PrintShop","@id":BASE+"/#business","name":"The Print Shop (Collingwood) Ltd.","url":BASE+"/","telephone":"+1-705-445-2880","image":LIVE+"/8342ThePri/200xc/logo8342-horizontal608x105.png","priceRange":"$$","foundingDate":"1980","address":{"@type":"PostalAddress","streetAddress":"26 Ronell Crescent","addressLocality":"Collingwood","addressRegion":"ON","postalCode":"L9Y 4J7","addressCountry":"CA"},"geo":{"@type":"GeoCoordinates","latitude":GEO.lat,"longitude":GEO.lng},"areaServed":AREAS.map(a=>({"@type":"City","name":a})),"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday"],"opens":"08:00","closes":"17:00"}],"slogan":"Good service at a fair price."}; }
+function localbusiness(){ return {"@context":"https://schema.org","@type":"PrintShop","@id":BASE+"/#business","name":"The Print Shop (Collingwood) Ltd.","url":BASE+"/","telephone":"+1-705-445-2880","image":BASE+"/og-image.png","logo":BASE+"/icon-512.png","priceRange":"$$","foundingDate":"1980","address":{"@type":"PostalAddress","streetAddress":"26 Ronell Crescent","addressLocality":"Collingwood","addressRegion":"ON","postalCode":"L9Y 4J7","addressCountry":"CA"},"geo":{"@type":"GeoCoordinates","latitude":GEO.lat,"longitude":GEO.lng},"areaServed":AREAS.map(a=>({"@type":"City","name":a})),"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday"],"opens":"08:00","closes":"17:00"}],"slogan":"Good service at a fair price."}; }
 const crumb = trail => ({"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":trail.map((t,i)=>({"@type":"ListItem","position":i+1,"name":t[0],...(t[1]?{"item":BASE+t[1]}:{})}))});
 const faqpage = items => ({"@context":"https://schema.org","@type":"FAQPage","mainEntity":items.map(([q,a])=>({"@type":"Question","name":q,"acceptedAnswer":{"@type":"Answer","text":a}}))});
 const productSchema = (n,d,u) => ({"@context":"https://schema.org","@type":"Product","name":n,"description":d,"url":BASE+u,"category":"Printing","brand":{"@type":"Brand","name":"The Print Shop (Collingwood) Ltd."},"offers":{"@type":"Offer","availability":"https://schema.org/InStock","priceCurrency":"CAD","seller":{"@id":BASE+"/#business"},"areaServed":"Collingwood, Ontario"}});
 const serviceSchema = (n,d,u) => ({"@context":"https://schema.org","@type":"Service","name":n,"description":d,"url":BASE+u,"serviceType":n,"provider":{"@id":BASE+"/#business"},"areaServed":AREAS.map(a=>({"@type":"City","name":a}))});
 
 function metaBlock(canonical, title, desc, extraLd){
-  const ogimg = LIVE+"/8342ThePri/200xc/logo8342-horizontal608x105.png";
-  const t=[`<link rel="canonical" href="${canonical}">`,`<meta property="og:type" content="website">`,`<meta property="og:site_name" content="The Print Shop (Collingwood) Ltd.">`,`<meta property="og:title" content="${esc(title)}">`,`<meta property="og:description" content="${esc(desc)}">`,`<meta property="og:url" content="${canonical}">`,`<meta property="og:image" content="${ogimg}">`,`<meta property="og:locale" content="en_CA">`,`<meta name="twitter:card" content="summary_large_image">`,`<meta name="twitter:title" content="${esc(title)}">`,`<meta name="twitter:description" content="${esc(desc)}">`,`<meta name="twitter:image" content="${ogimg}">`,`<meta name="geo.region" content="CA-ON">`,`<meta name="geo.placename" content="Collingwood">`,`<meta name="robots" content="index,follow,max-image-preview:large">`];
+  const ogimg = BASE+"/og-image.png";
+  const t=[`<link rel="canonical" href="${canonical}">`,`<meta property="og:type" content="website">`,`<meta property="og:site_name" content="The Print Shop (Collingwood) Ltd.">`,`<meta property="og:title" content="${esc(title)}">`,`<meta property="og:description" content="${esc(desc)}">`,`<meta property="og:url" content="${canonical}">`,`<meta property="og:image" content="${ogimg}">`,`<meta property="og:image:width" content="1200">`,`<meta property="og:image:height" content="630">`,`<meta property="og:image:alt" content="The Print Shop, Collingwood, Ontario. Printing since 1980.">`,`<meta property="og:locale" content="en_CA">`,`<meta name="twitter:card" content="summary_large_image">`,`<meta name="twitter:title" content="${esc(title)}">`,`<meta name="twitter:description" content="${esc(desc)}">`,`<meta name="twitter:image" content="${ogimg}">`,`<meta name="geo.region" content="CA-ON">`,`<meta name="geo.placename" content="Collingwood">`,`<meta name="robots" content="index,follow,max-image-preview:large">`];
   extraLd.forEach(o=>t.push(ld(o)));
   return t.join("\n");
 }
@@ -176,7 +176,8 @@ ${metaBlock(canonical,title,desc,extraLd)}
 }
 
 function header(root){
-  const prod = PRODUCTS.map(p=>`        <a href="${L(root,"printing/"+p[0]+"/")}">${p[1]}</a>`).join("\n");
+  // Menu shows the five core products; the rest live on All Products.
+  const prod = PRODUCTS.slice(0,5).map(p=>`        <a href="${L(root,"printing/"+p[0]+"/")}">${p[1]}</a>`).join("\n");
   const svc = SERVICES.map(s=>`        <a href="${L(root,"services/"+s[0]+"/")}">${s[1]}</a>`).join("\n");
   return `
 <div class="topbar">
@@ -209,28 +210,7 @@ ${svc}
           <a class="all" href="${L(root,'services/')}">View all services</a>
         </div>
       </div>
-      <div class="drop">
-        <a href="${LIVE}/resources/">Resources <span class="caret" aria-hidden="true"></span></a>
-        <div class="drop-menu">
-          <a href="${LIVE}/resources/the-ideas-collection/">The Ideas Collection</a>
-          <a href="${LIVE}/resources/greatest-treasures/">Greatest Treasures</a>
-          <a href="${LIVE}/resources/whats-new/">What's New</a>
-          <a href="${LIVE}/resources/popular-graphic-arts-software/">Popular Graphic Arts Software</a>
-          <div class="div"></div>
-          <a class="all" href="${LIVE}/resources/">View all resources</a>
-        </div>
-      </div>
-      <div class="drop">
-        <a href="${L(root,'feature/about-us/')}">About <span class="caret" aria-hidden="true"></span></a>
-        <div class="drop-menu">
-          <a href="${L(root,'feature/about-us/')}">About Us</a>
-          <a href="${LIVE}/feature/our-philosophy/">Our Philosophy</a>
-          <a href="${LIVE}/feature/the-environment/">The Environment</a>
-          <a href="${LIVE}/feature/portfolio/">Portfolio</a>
-          <a href="${LIVE}/feature/we-make-you-happy/">We Make You Happy</a>
-          <a href="${LIVE}/feature/our-1-boss/">Our #1 Boss…</a>
-        </div>
-      </div>
+      <a href="${L(root,'feature/about-us/')}">About</a>
       <a href="${L(root,'contact-us/')}">Contact</a>
       <a class="btn sm navcta" href="${L(root,'printing/custom-printing/')}">Get an estimate</a>
     </nav>
@@ -270,9 +250,8 @@ ${svc}
         <a href="${L(root,'feature/about-us/')}">About Us</a>
         <a href="${L(root,'contact-us/')}">Contact</a>
         <a href="${L(root,'printing/custom-printing/')}">Get an estimate</a>
-        <a href="${LIVE}/account/">My Account</a>
-        <a href="${LIVE}/help-center/terms-conditions/">Terms &amp; Conditions</a>
-        <a href="${LIVE}/feature/security-privacy/">Security &amp; Privacy</a>
+        <a href="${L(root,'terms/')}">Terms &amp; Conditions</a>
+        <a href="${L(root,'privacy/')}">Privacy</a>
       </div>
     </div>
     <div class="legal">
@@ -668,6 +647,108 @@ function buildAbout(){
   write("feature/about-us/index.html", h);
 }
 
+// ---------------------------------------------------------------- legal
+// Plain-language terms and privacy notice. Owner to review before launch.
+const LEGAL_UPDATED = "November 2026";
+const LEGAL = {
+  terms: {
+    title: "Terms & Conditions",
+    desc: "The terms that apply to estimates, proofs, orders and use of the website for The Print Shop (Collingwood) Ltd.",
+    h1: "Terms &amp; Conditions",
+    lede: "How estimates, proofs and orders work at The Print Shop.",
+    body: `
+    <p>These terms apply to estimates, orders and use of this website. By placing an order, you agree to them. If anything here conflicts with a written quote or agreement for your job, the written quote or agreement applies.</p>
+    <h2>Estimates</h2>
+    <p>Estimates are based on the details you give us: quantity, size, stock, colours, finishing and artwork condition. If the job changes, or the files need more work than expected, the price may change. We'll tell you before we go ahead. Estimates are valid for 30 days unless the quote says otherwise, since paper prices change.</p>
+    <p>The instant prices shown on this website are starting points for planning only. They are not a binding quote until we confirm them with you.</p>
+    <h2>Artwork and proofs</h2>
+    <p>We send a proof before printing. Please check it carefully: spelling, phone numbers, dates, layout and colours. Once you approve a proof, we print what you approved, and corrections after approval may cost extra.</p>
+    <p>Colour on screen and on a home printer won't match printed colour exactly. Small variations between proofs and the finished run, and between separate print runs, are normal in printing.</p>
+    <h2>Your content</h2>
+    <p>You confirm that you own or have permission to use everything you send us, including logos, photos, text and fonts. We may decline any job we consider unlawful or inappropriate.</p>
+    <h2>Quantities</h2>
+    <p>Printing and finishing involve setup sheets and some waste, so delivered quantities can vary slightly from the quantity ordered. If an exact count matters for your job, tell us when you order.</p>
+    <h2>Turnaround, pickup and delivery</h2>
+    <p>Turnaround times are estimates and start once we have your approved proof and any required deposit. Rush work is available on request. Finished work can be picked up at 26 Ronell Crescent, Collingwood, or delivered by arrangement.</p>
+    <h2>Payment</h2>
+    <p>Payment terms are set out on your quote or invoice. We may ask for a deposit on large or custom orders before production starts.</p>
+    <h2>Problems with an order</h2>
+    <p>Please check your order when you receive it and contact us within 7 days if something isn't right. If the error is ours, we'll reprint or credit the affected items. Our responsibility is limited to the price of the order in question.</p>
+    <h2>This website</h2>
+    <p>We work to keep the information on this site accurate, but products, prices and hours can change. Content on this site belongs to The Print Shop (Collingwood) Ltd. unless noted otherwise.</p>
+    <h2>Governing law</h2>
+    <p>These terms are governed by the laws of the Province of Ontario and the federal laws of Canada that apply there.</p>`
+  },
+  privacy: {
+    title: "Privacy Policy",
+    desc: "How The Print Shop (Collingwood) Ltd. collects, uses and protects personal information, including quote requests sent through the website.",
+    h1: "Privacy Policy",
+    lede: "What we collect, why, and what we do with it.",
+    body: `
+    <p>The Print Shop (Collingwood) Ltd. respects your privacy and handles personal information in line with Canada's <em>Personal Information Protection and Electronic Documents Act</em> (PIPEDA).</p>
+    <h2>What we collect</h2>
+    <p>When you request an estimate or contact us, we collect what you give us: your name, company, email address, phone number and the details of your job. If you send artwork or files, we keep those too, so we can produce your order.</p>
+    <p>We don't use advertising trackers on this website, and we don't sell or rent personal information.</p>
+    <h2>How we use it</h2>
+    <p>We use your information to prepare estimates, produce and deliver your order, invoice you, and answer your questions. We may contact you about your job. We won't add you to a marketing list unless you ask to be on it.</p>
+    <h2>Quote requests from this website</h2>
+    <p>The estimate forms on this site send your request to our shop by email. Our website is hosted by Vercel, and our email is provided by Microsoft. These providers process data on our behalf and may store it outside Canada, including in the United States, where it can be subject to local laws.</p>
+    <h2>Cookies and browser storage</h2>
+    <p>This site doesn't set advertising or tracking cookies. To avoid showing you the estimate pop-up again and again, your browser stores a single setting (<code>tps_quote_seen</code>) that records when you last saw it. It contains no personal information and you can clear it at any time in your browser settings. Fonts are loaded from Google Fonts, which receives your IP address when the page loads.</p>
+    <h2>How long we keep it</h2>
+    <p>We keep job and customer records for as long as we need them to serve you and to meet tax and accounting requirements. Artwork may be kept so we can reprint your job; ask us any time if you want it deleted.</p>
+    <h2>Your choices</h2>
+    <p>You can ask to see the personal information we hold about you, correct it, or have us delete it where we're not required to keep it. Contact us at <a href="mailto:${EMAIL}">${EMAIL}</a> or <a href="tel:${TEL}">${PHONE}</a>.</p>
+    <p>If you're not satisfied with our response, you can contact the Office of the Privacy Commissioner of Canada at <a href="https://www.priv.gc.ca/">priv.gc.ca</a>.</p>
+    <h2>Changes</h2>
+    <p>We may update this policy from time to time. The date below shows when it was last changed.</p>`
+  }
+};
+function buildLegal(slug){
+  const p = LEGAL[slug], root = "../";
+  let h = head(root, `${p.title} — The Print Shop (Collingwood) Ltd.`, p.desc, BASE+"/"+slug+"/", [crumb([["Home","/"],[p.title,"/"+slug+"/"]])]);
+  h += header(root);
+  h += `
+<main id="main">
+<div class="page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="${L(root,'')}">Home</a><span class="s">/</span>${p.h1}</div>
+    <h1>${p.h1}</h1>
+    <p>${p.lede}</p>
+  </div>
+</div>
+<section>
+  <div class="wrap rich">${p.body}
+    <p style="margin-top:36px;color:var(--muted,#666);font-size:.9em">Last updated ${LEGAL_UPDATED}. Questions: <a href="mailto:${EMAIL}">${EMAIL}</a> · ${PHONE}</p>
+  </div>
+</section>
+</main>`;
+  h += footer(root) + MODAL + NAVJS + "\n</body></html>";
+  write(slug+"/index.html", h);
+}
+
+// ---------------------------------------------------------------- 404
+function build404(){
+  // Served by Vercel at any path, so links are absolute from the site root.
+  const root = "/";
+  let h = head(root, "Page not found — The Print Shop (Collingwood) Ltd.", "This page has moved or no longer exists.", BASE+"/", []);
+  h = h.replace('<meta name="robots" content="index,follow,max-image-preview:large">','<meta name="robots" content="noindex">');
+  h += header(root);
+  h += `
+<main id="main">
+<div class="page-hero">
+  <div class="wrap">
+    <h1>That page has moved.</h1>
+    <p>We've rebuilt our website, so some old links no longer work. Everything you need is still here.</p>
+    <p style="margin-top:24px"><a class="btn" href="/printing/" style="background:var(--red);border-color:var(--red)">See all products</a>
+      <a class="btn ghost" href="/printing/custom-printing/" style="margin-left:10px;color:var(--paper);border-color:var(--paper)">Get an estimate</a></p>
+  </div>
+</div>
+</main>`;
+  h += footer(root) + MODAL + NAVJS + "\n</body></html>";
+  write("404.html", h);
+}
+
 function buildContact(){
   const root="../";
   const mapq="26+Ronell+Crescent+Collingwood+Ontario+L9Y+4J7";
@@ -834,7 +915,7 @@ function buildQuote(){
 
 // ---------------------------------------------------------------- aux
 function aux(){
-  const pages=["index.html","printing/index.html","services/index.html","feature/about-us/index.html","contact-us/index.html","printing/custom-printing/index.html"]
+  const pages=["index.html","printing/index.html","services/index.html","feature/about-us/index.html","contact-us/index.html","printing/custom-printing/index.html","terms/index.html","privacy/index.html"]
     .concat(PRODUCTS.map(p=>`printing/${p[0]}/index.html`))
     .concat(SERVICES.map(s=>`services/${s[0]}/index.html`));
   const locs=[...new Set(pages.map(p=>BASE+urlFor(p)))].sort();
@@ -862,6 +943,9 @@ SERVICES.forEach(buildService);
 buildAbout();
 buildContact();
 buildQuote();
+buildLegal("terms");
+buildLegal("privacy");
+build404();
 aux();
 let count=0;(function w(d){for(const e of fs.readdirSync(d,{withFileTypes:true})){const fp=path.join(d,e.name);if(e.isDirectory())w(fp);else if(e.name.endsWith(".html"))count++;}})(OUT);
 console.log("Built "+count+" HTML pages to "+OUT);
