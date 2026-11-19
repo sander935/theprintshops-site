@@ -1,13 +1,16 @@
 // Vercel Function: POST /api/quote
-// Emails a quote request from the website through the shop's own Microsoft 365 mailbox,
-// using Microsoft Graph (no passwords, no third-party form service).
-// Configure in Vercel → Project → Settings → Environment Variables:
-//   MS_TENANT_ID      Directory (tenant) ID of the shop's Microsoft 365
-//   MS_CLIENT_ID      Application (client) ID of the "Website quote form" app registration
-//   MS_CLIENT_SECRET  that app's client secret (mark as Sensitive in Vercel)
-//   QUOTE_FROM        mailbox the email is sent from, e.g. info@theprintshops.ca
-//   QUOTE_TO          optional: who receives requests (comma-separated); defaults to QUOTE_FROM
-// Until these are set the endpoint answers 503 and the site falls back to opening the visitor's email app.
+// Emails each quote request to the shop. Two ways to send, picked by which env vars are set
+// (Vercel → Project → Settings → Environment Variables):
+//
+// A) Resend (used when RESEND_API_KEY is set)
+//   RESEND_API_KEY    Resend API key with sending access (mark as Sensitive)
+//   QUOTE_FROM        sender on a domain verified in Resend, e.g. "The Print Shop website <forms@send.example.ca>"
+//   QUOTE_TO          who receives requests (comma-separated), e.g. info@theprintshops.ca
+//
+// B) Microsoft Graph, from the shop's own Microsoft 365 mailbox
+//   MS_TENANT_ID, MS_CLIENT_ID, MS_CLIENT_SECRET, QUOTE_FROM (mailbox address), QUOTE_TO (optional)
+//
+// Until one is set up the endpoint answers 503 and the site falls back to opening the visitor's email app.
 
 const LIMITS = { source: 60, name: 120, company: 160, email: 200, phone: 60, product: 120, qty: 60, size: 200, details: 5000 };
 const ATTR_KEYS = ["source", "medium", "campaign", "term", "content", "landing", "referrer", "gclid", "fbclid", "msclkid",
@@ -78,15 +81,47 @@ async function handler(req, res) {
   const { errors, subject, text, replyTo } = buildMessage(body);
   if (errors.length) return res.status(400).json({ ok: false, error: "invalid", fields: errors });
 
-  const cfg = config();
-  if (!cfg) return res.status(503).json({ ok: false, error: "not_configured" });
+  const rcfg = resendConfig();
+  const cfg = rcfg ? null : config();
+  if (!rcfg && !cfg) return res.status(503).json({ ok: false, error: "not_configured" });
 
   try {
-    await sendViaGraph(cfg, { subject, text, replyTo, replyName: oneLine(clean(body.name, 120)) });
+    const msg = { subject, text, replyTo, replyName: oneLine(clean(body.name, 120)) };
+    if (rcfg) await sendViaResend(rcfg, msg);
+    else await sendViaGraph(cfg, msg);
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error("quote: send failed:", err && err.message);
     return res.status(502).json({ ok: false, error: "send_failed" });
+  }
+}
+
+// ---------------------------------------------------------------- Resend
+function resendConfig() {
+  const { RESEND_API_KEY, QUOTE_FROM, QUOTE_TO } = process.env;
+  if (!RESEND_API_KEY || !QUOTE_FROM || !QUOTE_TO) return null;
+  const from = QUOTE_FROM.trim();
+  const addr = (from.match(/<([^>]+)>\s*$/) || [null, from])[1].trim();
+  const to = String(QUOTE_TO).split(",").map((s) => s.trim()).filter((s) => EMAIL_RE.test(s));
+  if (!EMAIL_RE.test(addr) || !to.length) return null;
+  return { key: RESEND_API_KEY.trim(), from, to };
+}
+
+async function sendViaResend(cfg, { subject, text, replyTo, replyName }) {
+  const r = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${cfg.key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: cfg.from,
+      to: cfg.to,
+      subject,
+      text,
+      reply_to: replyName ? `${replyName.replace(/[<>"]/g, "")} <${replyTo}>` : replyTo,
+    }),
+  });
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({}));
+    throw new Error(`resend ${r.status}: ${j.name || ""} ${j.message || ""}`);
   }
 }
 
@@ -142,4 +177,4 @@ async function sendViaGraph(cfg, { subject, text, replyTo, replyName }) {
 
 module.exports = handler;
 module.exports.buildMessage = buildMessage;
-module.exports._test = { config, resetToken: () => { tokenCache = { key: "", token: "", exp: 0 }; } };
+module.exports._test = { config, resendConfig,resetToken: () => { tokenCache = { key: "", token: "", exp: 0 }; } };
