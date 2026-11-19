@@ -301,13 +301,25 @@ const ATTRJS = `<script>
   var fresh=Object.keys(q).length>0||!!ref;
   if(!get('tps_ft'))put('tps_ft',touch());
   if(fresh||!get('tps_lt'))put('tps_lt',touch());
+  // Visit history: session count, pages viewed this visit and time actually spent looking at them.
+  var now=Date.now(), SESS=1800000, sc=get('tps_sc')||{ts:now,n:0}, ss=null;
+  try{ss=JSON.parse(localStorage.getItem('tps_ss')||'null');}catch(e){}
+  if(!ss||!ss.j||now-ss.last>SESS){sc.n=(sc.n||0)+1;sc.ts=now;ss={last:now,eng:0,j:[]};}
+  put('tps_sc',sc);
+  ss.j.push({p:location.pathname,t:0}); if(ss.j.length>15)ss.j.shift();
+  var cur=ss.j.length-1, vis=document.visibilityState==='visible'?Date.now():null;
+  function save(){var t=Date.now();if(vis){var d=t-vis;ss.eng+=d;ss.j[cur].t+=d;vis=t;}ss.last=t;try{localStorage.setItem('tps_ss',JSON.stringify(ss));}catch(e){}}
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden'){save();vis=null;}else vis=Date.now();});
+  window.addEventListener('pagehide',save); save();
   window.tpsAttribution=function(){
     var f=get('tps_ft')||{},l=get('tps_lt')||{};
     var ago=f.ts?String(Math.round((Date.now()-f.ts)/DAY)):'';
     return {source:l.source||'',medium:l.medium||'',campaign:l.campaign||'',term:l.term||'',content:l.content||'',
       landing:l.landing||'',referrer:l.referrer||'',gclid:l.gclid||'',fbclid:l.fbclid||'',msclkid:l.msclkid||'',
       first_source:f.source||'',first_medium:f.medium||'',first_campaign:f.campaign||'',first_landing:f.landing||'',
-      first_days_ago:ago,submitted_from:location.pathname};
+      first_days_ago:ago,submitted_from:location.pathname,
+      visits:String(sc.n||1),engaged_seconds:(save(),String(Math.round(ss.eng/1000))),
+      journey:ss.j.map(function(x){return x.p+' ('+Math.round(x.t/1000)+'s)';}).join(' > ')};
   };
   window.tpsSourceLine=function(a){
     return 'Source: '+(a.source||'(unknown)')+' / '+(a.medium||'')+(a.campaign?' / '+a.campaign:'')+(a.landing?' (landed on '+a.landing+')':'');
