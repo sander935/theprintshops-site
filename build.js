@@ -280,6 +280,45 @@ const NAVJS = `
 // ---------------------------------------------------------------- quote pop-up (modal)
 const QM_OPTS = PRODUCTS.map(p=>`<option value="${p[1]}">${p[1]}</option>`).join("");
 const QM_NAMES = JSON.stringify(Object.fromEntries(PRODUCTS.map(p=>[p[0],p[1]])));
+// Lead-source tracking. Records where a visitor came from (UTM tags, ad click IDs,
+// or the referring site) on first and latest visit, kept in the browser for 90 days,
+// and sends it with any quote request so the shop can see which marketing works.
+const ATTRJS = `<script>
+(function(){
+  var K=['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid','fbclid','msclkid'];
+  var DAY=86400000, TTL=90*DAY, SE=['google.','bing.','duckduckgo.','yahoo.','ecosia.','search.brave.'];
+  function get(k){try{var v=JSON.parse(localStorage.getItem(k)||'null');if(v&&v.ts&&(Date.now()-v.ts)<TTL)return v;}catch(e){}return null;}
+  function put(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  var q={};try{var p=new URLSearchParams(location.search);K.forEach(function(k){var x=p.get(k);if(x)q[k]=x.slice(0,200);});}catch(e){}
+  var ref='';try{if(document.referrer){var h=new URL(document.referrer).hostname;if(h&&h!==location.hostname)ref=h;}}catch(e){}
+  function touch(){
+    var src=q.utm_source||(q.gclid?'google':q.fbclid?'facebook':q.msclkid?'bing':ref)||'(direct)';
+    var med=q.utm_medium||((q.gclid||q.msclkid)?'cpc':q.fbclid?'paid_social':ref?(SE.some(function(s){return ref.indexOf(s)>-1;})?'organic':'referral'):'(none)');
+    var t={ts:Date.now(),source:src,medium:med,campaign:q.utm_campaign||'',term:q.utm_term||'',content:q.utm_content||'',landing:location.pathname,referrer:ref};
+    ['gclid','fbclid','msclkid'].forEach(function(k){if(q[k])t[k]=q[k];});
+    return t;
+  }
+  var fresh=Object.keys(q).length>0||!!ref;
+  if(!get('tps_ft'))put('tps_ft',touch());
+  if(fresh||!get('tps_lt'))put('tps_lt',touch());
+  window.tpsAttribution=function(){
+    var f=get('tps_ft')||{},l=get('tps_lt')||{};
+    var ago=f.ts?String(Math.round((Date.now()-f.ts)/DAY)):'';
+    return {source:l.source||'',medium:l.medium||'',campaign:l.campaign||'',term:l.term||'',content:l.content||'',
+      landing:l.landing||'',referrer:l.referrer||'',gclid:l.gclid||'',fbclid:l.fbclid||'',msclkid:l.msclkid||'',
+      first_source:f.source||'',first_medium:f.medium||'',first_campaign:f.campaign||'',first_landing:f.landing||'',
+      first_days_ago:ago,submitted_from:location.pathname};
+  };
+  window.tpsSourceLine=function(a){
+    return 'Source: '+(a.source||'(unknown)')+' / '+(a.medium||'')+(a.campaign?' / '+a.campaign:'')+(a.landing?' (landed on '+a.landing+')':'');
+  };
+  window.tpsLead=function(form,product){try{
+    if(window.gtag)window.gtag('event','generate_lead',{form_name:form,product:product||''});
+    if(window.fbq)window.fbq('track','Lead');
+    if(window.va)window.va('event',{name:'Quote request',data:{form:form}});
+  }catch(e){}};
+})();
+</script>`;
 const MODAL = `
 <div class="qm-overlay" id="qmOverlay" role="dialog" aria-modal="true" aria-labelledby="qmTitle" aria-hidden="true">
   <div class="qm" role="document">
@@ -304,6 +343,7 @@ const MODAL = `
     </div>
   </div>
 </div>
+${ATTRJS}
 <script>
 (function(){
   var ov=document.getElementById('qmOverlay'); if(!ov) return;
@@ -344,13 +384,16 @@ const MODAL = `
       msg.innerHTML='Thanks — we have your request and will reply with a price, usually the same business day. Questions? Call <a href="tel:+17054452880" style="color:var(--red)">705 445 2880</a>.';
       msg.classList.add('show');
     }
+    var attr=window.tpsAttribution?window.tpsAttribution():{};
+    if(window.tpsLead)window.tpsLead('Website pop-up',product);
     function fallback(){
       var body='Quote request from the website pop-up:%0D%0A%0D%0A'
         +'Name: '+encodeURIComponent(name)+'%0D%0A'
         +'Email: '+encodeURIComponent(email)+'%0D%0A'
         +'Phone: '+encodeURIComponent(phone)+'%0D%0A'
         +'Product: '+encodeURIComponent(product)+'%0D%0A%0D%0A'
-        +'Details:%0D%0A'+encodeURIComponent(details);
+        +'Details:%0D%0A'+encodeURIComponent(details)
+        +(window.tpsSourceLine?'%0D%0A%0D%0A'+encodeURIComponent(window.tpsSourceLine(attr)):'');
       msg.innerHTML='Thanks — your email app is opening with the request ready to send. Prefer to call? <a href="tel:+17054452880" style="color:var(--red)">705 445 2880</a>.';
       msg.classList.add('show');
       window.location.href='mailto:info@theprintshops.ca?subject=Quote%20request&body='+body;
@@ -358,7 +401,7 @@ const MODAL = `
     btn.disabled=true;msg.innerHTML='Sending…';msg.classList.add('show');
     fetch('/api/quote/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       source:'Website pop-up',name:name,email:email,phone:phone,product:product,details:details,
-      website:(document.getElementById('qm_website')||{}).value||''
+      website:(document.getElementById('qm_website')||{}).value||'',attribution:attr
     })}).then(function(r){return r.json().catch(function(){return {};});})
       .then(function(j){if(j&&j.ok)done();else fallback();})
       .catch(fallback)
@@ -694,7 +737,8 @@ const LEGAL = {
     <h2>Quote requests from this website</h2>
     <p>The estimate forms on this site send your request to our shop by email. Our website is hosted by Vercel, and our email is provided by Microsoft. These providers process data on our behalf and may store it outside Canada, including in the United States, where it can be subject to local laws.</p>
     <h2>Cookies and browser storage</h2>
-    <p>This site doesn't set advertising or tracking cookies. To avoid showing you the estimate pop-up again and again, your browser stores a single setting (<code>tps_quote_seen</code>) that records when you last saw it. It contains no personal information and you can clear it at any time in your browser settings. Fonts are loaded from Google Fonts, which receives your IP address when the page loads.</p>
+    <p>This site doesn't set advertising or tracking cookies. To avoid showing you the estimate pop-up again and again, your browser stores a single setting (<code>tps_quote_seen</code>) that records when you last saw it. It contains no personal information and you can clear it at any time in your browser settings.</p>
+    <p>Your browser also keeps a note of how you found us, such as a Google search, an ad or a link in one of our emails, for up to 90 days. If you send us an estimate request, that note is included with it so we know which of our advertising works. We don't use it to follow you on other websites. Fonts are loaded from Google Fonts, which receives your IP address when the page loads.</p>
     <h2>How long we keep it</h2>
     <p>We keep job and customer records for as long as we need them to serve you and to meet tax and accounting requirements. Artwork may be kept so we can reprint your job; ask us any time if you want it deleted.</p>
     <h2>Your choices</h2>
@@ -883,6 +927,8 @@ function buildQuote(){
         '<a href="tel:${TEL}" style="color:var(--red)">${PHONE}</a>.';
       msg.classList.add('show');
     }
+    var attr=window.tpsAttribution?window.tpsAttribution():{};
+    if(window.tpsLead)window.tpsLead('Quote page',v('product'));
     function fallback(){
       var body='Estimate request from the website:%0D%0A%0D%0A'
         +'Name: '+encodeURIComponent(v('name'))+'%0D%0A'
@@ -892,7 +938,8 @@ function buildQuote(){
         +'Product: '+encodeURIComponent(v('product'))+'%0D%0A'
         +'Quantity: '+encodeURIComponent(v('qty'))+'%0D%0A'
         +'Size/finish: '+encodeURIComponent(v('size'))+'%0D%0A%0D%0A'
-        +'Details:%0D%0A'+encodeURIComponent(v('details'));
+        +'Details:%0D%0A'+encodeURIComponent(v('details'))
+        +(window.tpsSourceLine?'%0D%0A%0D%0A'+encodeURIComponent(window.tpsSourceLine(attr)):'');
       msg.innerHTML='Thanks — your email app will open with the request ready to send. Prefer to call? '+
         '<a href="tel:${TEL}" style="color:var(--red)">${PHONE}</a>.';
       msg.classList.add('show');
@@ -901,7 +948,7 @@ function buildQuote(){
     btn.disabled=true;msg.textContent='Sending…';msg.classList.add('show');
     fetch('/api/quote/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       source:'Quote page',name:v('name'),company:v('company'),email:v('email'),phone:v('phone'),
-      product:v('product'),qty:v('qty'),size:v('size'),details:v('details'),website:v('q_website')
+      product:v('product'),qty:v('qty'),size:v('size'),details:v('details'),website:v('q_website'),attribution:attr
     })}).then(function(r){return r.json().catch(function(){return {};});})
       .then(function(j){if(j&&j.ok)done();else fallback();})
       .catch(fallback)
