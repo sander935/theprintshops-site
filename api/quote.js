@@ -1,14 +1,13 @@
 // Vercel Function: POST /api/quote
-// Emails a quote request from the website through the shop's own mailbox (SMTP).
-// No third-party form service. Configure in Vercel → Project → Settings → Environment Variables:
-//   SMTP_HOST   mail server, e.g. smtp.gmail.com
-//   SMTP_PORT   465 (SSL) or 587 (STARTTLS)
-//   SMTP_USER   the mailbox login, e.g. info@theprintshops.ca
-//   SMTP_PASS   that mailbox's password or app password
-//   QUOTE_TO    who receives requests (comma-separated), e.g. michael@theprintshops.ca
-//   SMTP_FROM   optional "From" address (defaults to SMTP_USER)
+// Emails a quote request from the website through the shop's own Microsoft 365 mailbox,
+// using Microsoft Graph (no passwords, no third-party form service).
+// Configure in Vercel → Project → Settings → Environment Variables:
+//   MS_TENANT_ID      Directory (tenant) ID of the shop's Microsoft 365
+//   MS_CLIENT_ID      Application (client) ID of the "Website quote form" app registration
+//   MS_CLIENT_SECRET  that app's client secret (mark as Sensitive in Vercel)
+//   QUOTE_FROM        mailbox the email is sent from, e.g. info@theprintshops.ca
+//   QUOTE_TO          optional: who receives requests (comma-separated); defaults to QUOTE_FROM
 // Until these are set the endpoint answers 503 and the site falls back to opening the visitor's email app.
-const nodemailer = require("nodemailer");
 
 const LIMITS = { source: 60, name: 120, company: 160, email: 200, phone: 60, product: 120, qty: 60, size: 200, details: 5000 };
 const ATTR_KEYS = ["source", "medium", "campaign", "term", "content", "landing", "referrer", "gclid", "fbclid", "msclkid",
@@ -79,20 +78,11 @@ async function handler(req, res) {
   const { errors, subject, text, replyTo } = buildMessage(body);
   if (errors.length) return res.status(400).json({ ok: false, error: "invalid", fields: errors });
 
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, QUOTE_TO, SMTP_FROM } = process.env;
-  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS || !QUOTE_TO) {
-    return res.status(503).json({ ok: false, error: "not_configured" });
-  }
+  const cfg = config();
+  if (!cfg) return res.status(503).json({ ok: false, error: "not_configured" });
 
-  const port = Number(SMTP_PORT) || 587;
   try {
-    const transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port,
-      secure: port === 465,
-      auth: { user: SMTP_USER, pass: SMTP_PASS },
-    });
-    await transporter.sendMail({ from: SMTP_FROM || SMTP_USER, to: QUOTE_TO, replyTo, subject, text });
+    await sendViaGraph(cfg, { subject, text, replyTo, replyName: oneLine(clean(body.name, 120)) });
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error("quote: send failed:", err && err.message);
@@ -100,5 +90,56 @@ async function handler(req, res) {
   }
 }
 
+// ---------------------------------------------------------------- Microsoft Graph
+function config() {
+  const { MS_TENANT_ID, MS_CLIENT_ID, MS_CLIENT_SECRET, QUOTE_FROM, QUOTE_TO } = process.env;
+  if (!MS_TENANT_ID || !MS_CLIENT_ID || !MS_CLIENT_SECRET || !QUOTE_FROM) return null;
+  const to = String(QUOTE_TO || QUOTE_FROM).split(",").map((s) => s.trim()).filter((s) => EMAIL_RE.test(s));
+  if (!EMAIL_RE.test(QUOTE_FROM.trim()) || !to.length) return null;
+  return { tenant: MS_TENANT_ID.trim(), clientId: MS_CLIENT_ID.trim(), secret: MS_CLIENT_SECRET, from: QUOTE_FROM.trim(), to };
+}
+
+// App-only access token, reused across requests while the function instance stays warm.
+let tokenCache = { key: "", token: "", exp: 0 };
+async function getToken(cfg) {
+  const key = cfg.tenant + "|" + cfg.clientId;
+  if (tokenCache.key === key && tokenCache.token && Date.now() < tokenCache.exp - 60000) return tokenCache.token;
+  const r = await fetch(`https://login.microsoftonline.com/${encodeURIComponent(cfg.tenant)}/oauth2/v2.0/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: cfg.clientId,
+      client_secret: cfg.secret,
+      scope: "https://graph.microsoft.com/.default",
+    }),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.access_token) throw new Error(`token ${r.status}: ${j.error || ""} ${String(j.error_description || "").split("\n")[0]}`);
+  tokenCache = { key, token: j.access_token, exp: Date.now() + (Number(j.expires_in) || 3600) * 1000 };
+  return j.access_token;
+}
+
+async function sendViaGraph(cfg, { subject, text, replyTo, replyName }) {
+  const token = await getToken(cfg);
+  const message = {
+    subject,
+    body: { contentType: "Text", content: text },
+    toRecipients: cfg.to.map((address) => ({ emailAddress: { address } })),
+    replyTo: [{ emailAddress: { address: replyTo, ...(replyName ? { name: replyName } : {}) } }],
+  };
+  const r = await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(cfg.from)}/sendMail`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ message, saveToSentItems: true }),
+  });
+  if (r.status !== 202) {
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 401) tokenCache = { key: "", token: "", exp: 0 };
+    throw new Error(`sendMail ${r.status}: ${(j.error && (j.error.code + " " + j.error.message)) || ""}`);
+  }
+}
+
 module.exports = handler;
 module.exports.buildMessage = buildMessage;
+module.exports._test = { config, resetToken: () => { tokenCache = { key: "", token: "", exp: 0 }; } };

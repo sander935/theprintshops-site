@@ -2,8 +2,5 @@
   "name": "theprintshops-site",
   "version": "1.0.0",
   "private": true,
-  "scripts": { "build": "node build.js" },
-  "dependencies": {
-    "nodemailer": "10.3.1"
-  }
+  "scripts": { "build": "node build.js" }
 }
