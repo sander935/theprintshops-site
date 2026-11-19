@@ -4,22 +4,90 @@
   "cleanUrls": true,
   "trailingSlash": true,
   "redirects": [
-    { "source": "/feature/our-philosophy", "destination": "/feature/about-us/", "permanent": true },
-    { "source": "/feature/the-environment", "destination": "/feature/about-us/", "permanent": true },
-    { "source": "/feature/portfolio", "destination": "/feature/about-us/", "permanent": true },
-    { "source": "/feature/we-make-you-happy", "destination": "/feature/about-us/", "permanent": true },
-    { "source": "/feature/our-1-boss", "destination": "/feature/about-us/", "permanent": true },
-    { "source": "/feature/website-insider", "destination": "/feature/about-us/", "permanent": true },
-    { "source": "/feature/our-mission", "destination": "/feature/about-us/", "permanent": true },
-    { "source": "/feature/security-privacy", "destination": "/privacy/", "permanent": true },
-    { "source": "/help-center/terms-conditions", "destination": "/terms/", "permanent": true },
-    { "source": "/help-center/:path*", "destination": "/contact-us/", "permanent": true },
-    { "source": "/resources/:path*", "destination": "/", "permanent": true },
-    { "source": "/account/:path*", "destination": "/contact-us/", "permanent": true },
-    { "source": "/site-map", "destination": "/", "permanent": true }
+    {
+      "source": "/feature/our-philosophy{/}?",
+      "destination": "/feature/about-us/",
+      "permanent": true
+    },
+    {
+      "source": "/feature/the-environment{/}?",
+      "destination": "/feature/about-us/",
+      "permanent": true
+    },
+    {
+      "source": "/feature/portfolio{/}?",
+      "destination": "/feature/about-us/",
+      "permanent": true
+    },
+    {
+      "source": "/feature/we-make-you-happy{/}?",
+      "destination": "/feature/about-us/",
+      "permanent": true
+    },
+    {
+      "source": "/feature/our-1-boss{/}?",
+      "destination": "/feature/about-us/",
+      "permanent": true
+    },
+    {
+      "source": "/feature/website-insider{/}?",
+      "destination": "/feature/about-us/",
+      "permanent": true
+    },
+    {
+      "source": "/feature/our-mission{/}?",
+      "destination": "/feature/about-us/",
+      "permanent": true
+    },
+    {
+      "source": "/feature/security-privacy{/}?",
+      "destination": "/privacy/",
+      "permanent": true
+    },
+    {
+      "source": "/help-center/terms-conditions{/}?",
+      "destination": "/terms/",
+      "permanent": true
+    },
+    {
+      "source": "/help-center/:path*",
+      "destination": "/contact-us/",
+      "permanent": true
+    },
+    {
+      "source": "/resources/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/account/:path*",
+      "destination": "/contact-us/",
+      "permanent": true
+    },
+    {
+      "source": "/site-map{/}?",
+      "destination": "/",
+      "permanent": true
+    }
   ],
   "headers": [
-    { "source": "/sitemap.xml", "headers": [{ "key": "Content-Type", "value": "application/xml" }] },
-    { "source": "/llms.txt", "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }] }
+    {
+      "source": "/sitemap.xml",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/xml"
+        }
+      ]
+    },
+    {
+      "source": "/llms.txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        }
+      ]
+    }
   ]
 }
