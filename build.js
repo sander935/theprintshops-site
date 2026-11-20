@@ -36,7 +36,7 @@ const PRODUCTS = [
     [["Sizes","4×6, 5×7, 6×9, custom"],["Stocks","Card weight"],["Sides","Single or double-sided"],["Coating","Matte, gloss or UV"]]],
   ["booklets","Booklets","Programs, catalogues and reports, bound to look the part.",
     [["More pages, more to say","When a single sheet isn't enough, a booklet gives your content room to breathe. Programs, catalogues, reports and manuals all read better bound into a proper piece."],
-     ["Printed and bound in-house","We handle printing and binding under one roof, so your booklet comes together faster and stays consistent from cover to last page. Full-colour interiors on a heavier gloss stock keep graphics crisp."]],
+     ["Printing and binding, together","We plan printing and binding as one job, so your booklet comes together faster and stays consistent from cover to last page. Full-colour interiors on a heavier gloss stock keep graphics crisp."]],
     ["Event programs","Product catalogues","Annual reports","Manuals and guides"],
     [["Binding","Saddle-stitch or bound"],["Pages","In multiples of four"],["Covers","Self or heavier cover stock"],["Interior","B&W or full colour"]]],
   ["sell-sheets","Sell Sheets","One page that answers the question and closes the gap.",
@@ -78,15 +78,15 @@ const PRODUCTS = [
 
 const SERVICES = [
   ["bindery-finishing","Bindery & Finishing","The steps that turn a stack of sheets into a proper piece.",
-    [["Finishing, in-house","Printing is only half the job. Cutting, folding, scoring, perforating, drilling, numbering and shrink-wrapping are the details that separate tidy work from rough work — and we do them all under one roof."],
-     ["Right the first time","Keeping finishing in-house means fewer hand-offs, tighter quality control and faster turnaround. Your job is checked at every stage before it goes out the door."]],
+    [["Finishing done properly","Printing is only half the job. Cutting, folding, scoring, perforating, drilling, numbering and shrink-wrapping are the details that separate tidy work from rough work, and we look after every one of them."],
+     ["Right the first time","We manage every step of the job, so there are fewer hand-offs, tighter quality control and faster turnaround. Your job is checked at every stage before it goes out the door."]],
     ["Cutting & trimming","Folding & scoring","Perforating & drilling","Numbering","Shrink-wrapping","Padding"]],
   ["graphic-design-services","Graphic Design","From concept to design to print — creative and effective.",
     [["No print-ready file? No problem.","Not everyone arrives with finished artwork. Our designers can build a piece from scratch or clean up what you have so it prints exactly as intended — the right size, the right colours, the right resolution."],
      ["Design that's made to print","There's a difference between art that looks good on screen and art that prints well. We design with bleeds, trim and stock in mind from the start, so there are no surprises on press."]],
     ["Logos & branding","Brochure & flyer layout","Business card design","File clean-up & prepress"]],
-  ["booklet-binding","Booklet Binding","Saddle-stitch and bound booklets, assembled in-house.",
-    [["Bound to last","From thin programs to thick catalogues, we assemble and bind booklets in-house. That keeps the whole job consistent — printing and binding matched to the same standard."],
+  ["booklet-binding","Booklet Binding","Saddle-stitch and bound booklets, from programs to catalogues.",
+    [["Bound to last","From thin programs to thick catalogues, we print and bind booklets to the same standard, so the whole job stays consistent."],
      ["The right binding for the page count","Saddle-stitch suits lighter booklets, while heavier pieces call for a sturdier bound edge. We'll recommend the binding that matches your page count and how the booklet will be used."]],
     ["Saddle-stitch","Bound booklets","Programs & catalogues","Manuals & reports"]],
   ["printing-copying-services","Printing & Copying","Short runs, long runs, colour and black-and-white.",
@@ -100,7 +100,7 @@ const FAQ = {
   "brochures":[["What brochure folds do you offer?","Tri-fold and bi-fold are the most common, with gate and Z-folds for a more premium piece. We'll recommend the fold that fits your content and budget."],["What's the minimum order for brochures?","We print short and long runs. Tell us your quantity and we'll quote it — small runs are no problem for a local shop."]],
   "flyers":[["How quickly can flyers be printed?","Flyers are one of our fastest products. With a print-ready file, most runs are ready in a few business days, with rush options available."],["Can I print double-sided flyers with a gloss coat?","Yes. Single or double-sided, with matte or gloss aqueous coating to make the colour pop."]],
   "postcards":[["Do you handle postcard mailings?","We print postcards on sturdy, mail-ready card stock. Ask us about sizes that qualify for better postage rates for your campaign."],["What's the best postcard size for direct mail?","4×6 and 5×7 are popular and cost-effective. We'll help you pick a size that balances impact and postage."]],
-  "booklets":[["What binding do you use for booklets?","Saddle-stitch for lighter booklets and bound edges for thicker pieces. Page count must be in multiples of four. We print and bind in-house."],["Can you print full-colour booklet interiors?","Yes — black-and-white or full colour, on text or heavier gloss stock for sharp graphics."]],
+  "booklets":[["What binding do you use for booklets?","Saddle-stitch for lighter booklets and bound edges for thicker pieces. Page count must be in multiples of four. We look after both the printing and the binding."],["Can you print full-colour booklet interiors?","Yes — black-and-white or full colour, on text or heavier gloss stock for sharp graphics."]],
   "sell-sheets":[["What is a sell sheet used for?","A sell sheet is a single-page leave-behind that keeps selling after the conversation — features, benefits and proof on one page."],["Can you print sell sheets double-sided?","Yes, single or double-sided on text or cover weight, with a matte or gloss finish."]],
   "rack-cards":[["What size are rack cards?","The standard is 4×9, which fits display racks in hotels, visitor centres and lobbies. Custom sizes are available."],["Are rack cards good for Collingwood tourism businesses?","Very. For attractions, hotels and restaurants around Collingwood and Georgian Bay, rack cards put your offer where visitors already look."]],
   "door-hangers":[["Are door hangers effective for local marketing?","Yes — a door hanger is the only message on the handle, with no mailbox to compete with. Add a tear-off coupon to give people a reason to keep it."]],
@@ -108,8 +108,8 @@ const FAQ = {
   "envelopes":[["Can you print envelopes to match my letterhead?","Yes. We print your logo and return address on #10, booklet and catalogue sizes, with or without a window, to match your stationery."]],
   "labels":[["What kinds of labels can you print?","Product, shipping, address and promotional labels in paper, gloss, vinyl or static cling, with permanent or removable adhesive, on sheets or rolls."]],
   "carbonless-forms":[["Do you print carbonless (NCR) forms?","Yes — invoices, work orders and receipts in 2-part or 3-part sets, padded or booked, with sequential numbering available."]],
-  "bindery-finishing":[["What finishing services do you offer?","Cutting, folding, scoring, perforating, drilling, numbering and shrink-wrapping — all in-house, so your job is finished properly and fast."]],
-  "booklet-binding":[["What booklet binding options are available?","Saddle-stitch and bound booklets, assembled in-house, from thin programs to thick catalogues."]],
+  "bindery-finishing":[["What finishing services do you offer?","Cutting, folding, scoring, perforating, drilling, numbering and shrink-wrapping. We handle all of it, so your job is finished properly and fast."]],
+  "booklet-binding":[["What booklet binding options are available?","Saddle-stitch and bound booklets, from thin programs to thick catalogues."]],
   "graphic-design-services":[["Can you design my print project from scratch?","Yes. Our designers can build a piece from scratch or clean up your file so it prints exactly as intended, with the right bleeds, trim and resolution."]],
   "printing-copying-services":[["Do you do short-run and same-day copying?","Yes — colour and black-and-white copying and printing, from a few pages to long production runs, as a full-service local printer."]],
 };
@@ -121,7 +121,7 @@ const write = (rel, html) => { const full = path.join(OUT, rel); fs.mkdirSync(pa
 const ld = o => '<script type="application/ld+json">\n' + JSON.stringify(o, null, 2) + '\n</script>';
 const urlFor = rel => "/" + rel.replace(/index\.html$/,"");
 
-function localbusiness(){ return {"@context":"https://schema.org","@type":"PrintShop","@id":BASE+"/#business","name":"The Print Shop (Collingwood) Ltd.","url":BASE+"/","telephone":"+1-705-445-2880","image":BASE+"/og-image.png","logo":BASE+"/icon-512.png","priceRange":"$$","foundingDate":"1980","address":{"@type":"PostalAddress","streetAddress":"26 Ronell Crescent","addressLocality":"Collingwood","addressRegion":"ON","postalCode":"L9Y 4J7","addressCountry":"CA"},"geo":{"@type":"GeoCoordinates","latitude":GEO.lat,"longitude":GEO.lng},"areaServed":AREAS.map(a=>({"@type":"City","name":a})),"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday"],"opens":"08:00","closes":"17:00"}],"slogan":"Good service at a fair price."}; }
+function localbusiness(){ return {"@context":"https://schema.org","@type":"PrintShop","@id":BASE+"/#business","name":"The Print Shop (Collingwood) Ltd.","url":BASE+"/","telephone":"+1-705-445-2880","image":BASE+"/og-image.png","logo":BASE+"/brand/logo-landscape.png","priceRange":"$$","foundingDate":"1980","address":{"@type":"PostalAddress","streetAddress":"26 Ronell Crescent","addressLocality":"Collingwood","addressRegion":"ON","postalCode":"L9Y 4J7","addressCountry":"CA"},"geo":{"@type":"GeoCoordinates","latitude":GEO.lat,"longitude":GEO.lng},"areaServed":AREAS.map(a=>({"@type":"City","name":a})),"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday"],"opens":"08:00","closes":"17:00"}],"slogan":"Good service at a fair price."}; }
 const crumb = trail => ({"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":trail.map((t,i)=>({"@type":"ListItem","position":i+1,"name":t[0],...(t[1]?{"item":BASE+t[1]}:{})}))});
 const faqpage = items => ({"@context":"https://schema.org","@type":"FAQPage","mainEntity":items.map(([q,a])=>({"@type":"Question","name":q,"acceptedAnswer":{"@type":"Answer","text":a}}))});
 const productSchema = (n,d,u) => ({"@context":"https://schema.org","@type":"Product","name":n,"description":d,"url":BASE+u,"category":"Printing","brand":{"@type":"Brand","name":"The Print Shop (Collingwood) Ltd."},"offers":{"@type":"Offer","availability":"https://schema.org/InStock","priceCurrency":"CAD","seller":{"@id":BASE+"/#business"},"areaServed":"Collingwood, Ontario"}});
@@ -189,8 +189,7 @@ function header(root){
 <header class="site">
   <div class="wrap nav">
     <a class="brand" href="${L(root,'')}" aria-label="The Print Shop Collingwood, home">
-      <b class="display">THE PRINT SHOP<span class="dot">.</span></b>
-      <small>COLLINGWOOD, ONTARIO</small>
+      <img class="logo" src="${root}brand/logo-landscape.svg" width="242" height="54" alt="The Print Shop (Collingwood) Ltd.">
     </a>
     <button class="navtoggle" aria-expanded="false" aria-controls="menu">Menu</button>
     <nav class="menu" id="menu" aria-label="Primary">
@@ -227,8 +226,7 @@ function footer(root){
     <div class="foot">
       <div>
         <a class="brand" href="${L(root,'')}">
-          <b class="display">THE PRINT SHOP<span style="color:var(--red)">.</span></b>
-          <small>COLLINGWOOD, ONTARIO</small>
+          <img class="logo" src="${root}brand/logo-landscape.svg" width="242" height="54" alt="The Print Shop (Collingwood) Ltd.">
         </a>
         <div class="addr">
           26 Ronell Crescent<br>Collingwood, Ontario&nbsp; L9Y 4J7<br>
@@ -442,9 +440,9 @@ function buildHome(){
 <div class="hero">
   <div class="sheet">
     <span class="crop-b" aria-hidden="true"></span>
-    <p class="kicker">A COLLINGWOOD PRINT SHOP SINCE 1980</p>
-    <h1 class="display">Good printing, <em>done right</em> in Collingwood.</h1>
-    <p class="lede">Brochures, business cards, flyers, booklets and more — printed well, priced fairly, and ready when you need them. Bring us your file or your idea, and we'll take it from there.</p>
+    <p class="kicker">SINCE 1980</p>
+    <h1 class="display">Great printing, <em>done right</em> in Collingwood.</h1>
+    <p class="lede">Brochures, business cards, flyers, booklets and more, priced fairly and ready when you need them. Bring us your file or your idea, and we'll take it from there.</p>
     <div class="cta">
       <a class="btn solid" href="${L(root,'printing/custom-printing/')}">Get an estimate</a>
       <a class="btn line" href="${L(root,'printing/')}">See what we print</a>
@@ -456,7 +454,7 @@ function buildHome(){
     <div class="grid">
       <div class="cell"><h3>A fair price</h3><p>No inflated quotes or surprise line items. Honest pricing on work that's built to last.</p></div>
       <div class="cell"><h3>Real service</h3><p>Talk to the people running the press. We proof your job carefully before it ever prints.</p></div>
-      <div class="cell"><h3>Made locally</h3><p>Printed and finished right here in Collingwood, so turnaround is quick and pickup is easy.</p></div>
+      <div class="cell"><h3>Local, start to finish</h3><p>Most jobs are printed and finished right here in Collingwood. For specialty work we use a network of trusted print partners, and you still deal with us from quote to pickup.</p></div>
     </div>
   </div>
 </div>
@@ -464,7 +462,7 @@ function buildHome(){
   <div class="wrap">
     <p class="eyebrow">WHAT WE PRINT</p>
     <h2 class="h-sec">Everything a growing business puts on paper.</h2>
-    <p class="lead">From a single box of business cards to a full run of booklets, it's all produced in-house. Pick a product to start a quote.</p>
+    <p class="lead">From a single box of business cards to a full run of booklets, we've got it covered. Pick a product to start a quote.</p>
     <div class="prod-list">
 ${rows}
     </div>
@@ -521,7 +519,7 @@ function buildProductsIndex(){
   <div class="wrap">
     <div class="crumbs"><a href="${L(root,'')}">Home</a><span class="s">/</span>Products</div>
     <h1>What we print.</h1>
-    <p>A full-service print shop under one roof. Don't see exactly what you need? We print plenty more — just ask for a custom quote.</p>
+    <p>A full-service print shop. Don't see exactly what you need? We print plenty more — just ask for a custom quote.</p>
   </div>
 </div>
 <section>
@@ -688,7 +686,7 @@ function buildAbout(){
     <p>Since 1980, The Print Shop (Collingwood) Ltd. has built its reputation by understanding what customers actually need and providing the range of services to meet it — fair prices, without compromising on quality.</p>
     <blockquote>We're in the business of printing, but what we produce is bigger than ink and toner on paper. We print your ideas — and help tell your story.</blockquote>
     <h2>How we work</h2>
-    <p>Everything happens under one roof: design, printing, and the bindery and finishing that turn a stack of sheets into a finished piece. That keeps quality consistent and turnaround quick, and it means you're always talking to the people doing the work.</p>
+    <p>Most of the work happens right here in our shop: design, printing, and the bindery and finishing that turn a stack of sheets into a finished piece. For specialty jobs, we work with a network of trusted print partners. Either way, you deal with us from start to finish, and you're always talking to people who know your job.</p>
     <p>We measure our success by yours. If your printing helps your business do better, we've done our job.</p>
     <div class="sig">Michael P. Donovan
       <span>Owner · <a href="mailto:michael@theprintshops.ca" style="color:var(--red);text-decoration:none">michael@theprintshops.ca</a></span>
@@ -983,7 +981,7 @@ function aux(){
   sm.push("</urlset>");
   write("sitemap.xml", sm.join("\n"));
   write("robots.txt", `User-agent: *\nAllow: /\n\n# Answer engines welcome\nUser-agent: GPTBot\nAllow: /\nUser-agent: OAI-SearchBot\nAllow: /\nUser-agent: PerplexityBot\nAllow: /\nUser-agent: ClaudeBot\nAllow: /\nUser-agent: Google-Extended\nAllow: /\n\nSitemap: ${BASE}/sitemap.xml\n`);
-  write("llms.txt", `# The Print Shop (Collingwood) Ltd.\n\n> Local, full-service print shop in Collingwood, Ontario, serving the Georgian Bay area since 1980. Good service at a fair price.\n\n## About\nThe Print Shop (Collingwood) Ltd. is a full-service printer in Collingwood, Ontario. Family-run reputation since 1980. Design, printing, bindery and finishing are all done in-house, so work is consistent, fast, and picked up locally — no shipping wait.\n\n## Contact\n- Phone: 705 445 2880\n- Address: 26 Ronell Crescent, Collingwood, Ontario L9Y 4J7, Canada\n- Hours: Monday to Friday, 8:00 am – 5:00 pm\n- Request a free estimate: ${BASE}/printing/custom-printing/\n\n## Areas served\n${AREAS.join(", ")}\n\n## Products\nBusiness cards, brochures, flyers, postcards, booklets, sell sheets, rack cards, door hangers, newsletters, envelopes, labels, carbonless (NCR) forms, and more. Full list: ${BASE}/printing/\n\n## Services\nBindery & finishing, graphic design, booklet binding, printing & copying. Full list: ${BASE}/services/\n\n## Why choose a local printer\nUnlike online printers shipped from away, The Print Shop offers real people who check your file, local pickup with no shipping wait, in-house design help, and 45 years of local experience.\n`);
+  write("llms.txt", `# The Print Shop (Collingwood) Ltd.\n\n> Local, full-service print shop in Collingwood, Ontario, serving the Georgian Bay area since 1980. Good service at a fair price.\n\n## About\nThe Print Shop (Collingwood) Ltd. is a full-service printer in Collingwood, Ontario. Family-run reputation since 1980. Most design, printing, bindery and finishing is done in the shop, with a network of trusted print partners for specialty jobs. Customers deal with one local shop from quote to pickup.\n\n## Contact\n- Phone: 705 445 2880\n- Address: 26 Ronell Crescent, Collingwood, Ontario L9Y 4J7, Canada\n- Hours: Monday to Friday, 8:00 am – 5:00 pm\n- Request a free estimate: ${BASE}/printing/custom-printing/\n\n## Areas served\n${AREAS.join(", ")}\n\n## Products\nBusiness cards, brochures, flyers, postcards, booklets, sell sheets, rack cards, door hangers, newsletters, envelopes, labels, carbonless (NCR) forms, and more. Full list: ${BASE}/printing/\n\n## Services\nBindery & finishing, graphic design, booklet binding, printing & copying. Full list: ${BASE}/services/\n\n## Why choose a local printer\nUnlike online printers shipped from away, The Print Shop offers real people who check your file, local pickup with no shipping wait, in-house design help, and more than 45 years of local experience.\n`);
 }
 
 // ---------------------------------------------------------------- run
@@ -994,6 +992,9 @@ fs.writeFileSync(path.join(OUT,"assets","style.css"), fs.readFileSync(path.join(
 // site icons (favicon, apple-touch-icon, manifest) are served from the site root
 const ICONS = path.join(__dirname,"icons");
 if (fs.existsSync(ICONS)) for (const f of fs.readdirSync(ICONS)) fs.copyFileSync(path.join(ICONS,f), path.join(OUT,f));
+// brand logos (SVG, converted from the shop's EPS files)
+const BRAND = path.join(__dirname,"brand");
+if (fs.existsSync(BRAND)) { fs.mkdirSync(path.join(OUT,"brand"),{recursive:true}); for (const f of fs.readdirSync(BRAND)) fs.copyFileSync(path.join(BRAND,f), path.join(OUT,"brand",f)); }
 buildHome();
 buildProductsIndex();
 PRODUCTS.forEach(buildProduct);
